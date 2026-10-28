@@ -1,9 +1,9 @@
-import { prisma } from "@/server/db";
+﻿import { prisma } from "@/server/db";
 import type { SessionContext } from "@/server/session";
 import type { CustomerDetailDTO, CustomerRow, OrderRow } from "@/lib/dto";
 import type { Prisma } from "@/generated/prisma/client";
 import { formatMinorFa } from "@/server/domain/money";
-import { taskInclude, toTaskRow } from "./tasks";
+import { taskInclude, toQueueRow } from "./tasks";
 import { orderStateInclude, toOrderSummaryDTO } from "./orders";
 
 /**
@@ -155,7 +155,7 @@ export async function getCustomer(ctx: SessionContext, customerId: string): Prom
     timeline.push({
       at: order.orderCreatedAt.toISOString(),
       kind: "order",
-      summary: `سفارش ${order.publicRef} — ${order.status}، ${formatMinorFa(order.totalMinor, order.currency)}`,
+      summary: `سفارش ${order.publicRef}: ${order.status}، ${formatMinorFa(order.totalMinor, order.currency)}`,
       conversationId: null,
       orderId: order.id,
     });
@@ -175,7 +175,7 @@ export async function getCustomer(ctx: SessionContext, customerId: string): Prom
       at: claim.claimedAt.toISOString(),
       kind: "payment",
       summary:
-        `اعلام پرداخت ${claim.order.publicRef} — ${claim.status}` +
+        `اعلام پرداخت ${claim.order.publicRef}: ${claim.status}` +
         (claim.amountMinor !== null ? `، ${formatMinorFa(claim.amountMinor)}` : "، بدون مبلغ"),
       conversationId: null,
       orderId: claim.order.id,
@@ -205,7 +205,7 @@ export async function getCustomer(ctx: SessionContext, customerId: string): Prom
   }
 
   for (const task of tasks) {
-    const row = toTaskRow(task, now);
+    const row = toQueueRow(task, now);
     timeline.push({
       at: task.createdAt.toISOString(),
       kind: "task",
@@ -261,3 +261,4 @@ function truncate(text: string, max: number): string {
   const cleaned = text.replace(/\s+/g, " ").trim();
   return cleaned.length <= max ? cleaned : `${cleaned.slice(0, max - 1)}…`;
 }
+

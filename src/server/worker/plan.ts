@@ -6,7 +6,8 @@ import type { UrgencySignals } from "@/server/domain/priority";
 import { computeDueAt, computePriority } from "@/server/domain/priority";
 import { taskDedupeKey, type TaskScope } from "@/server/domain/dedupe";
 import { evidenceFor } from "@/server/domain/intents";
-import { parseAmount } from "@/server/domain/money";
+import { parseAmount, type ParsedAmount } from "@/server/domain/money";
+import { normalizeText } from "@/server/domain/normalize";
 import type { DecisionOutput } from "@/server/providers/types";
 import type { InjectionSignal } from "./injection";
 
@@ -162,7 +163,7 @@ function planSuggestions(input: PlanInput, primary: IntentKey, intents: IntentKe
   //    the model's memory. No unit in the message → `value: null` (rule 7).
   const amountCandidate = findCandidate(candidates, output.amount?.candidateId);
   if (amountCandidate) {
-    const parsed = parseAmount(amountCandidate.raw);
+    const parsed = candidateAmount(amountCandidate);
     add("order.amount", { value: parsed.amountMinor === null ? null : parsed.amountMinor.toString() }, {
       candidateId: amountCandidate.id,
       evidence: { start: amountCandidate.start, end: amountCandidate.end },
@@ -223,6 +224,18 @@ function findCandidate(candidates: readonly Candidate[], id: string | null | und
   return candidates.find((candidate) => candidate.id === id) ?? null;
 }
 
+/**
+ * Read an amount out of a candidate's span.
+ *
+ * `Candidate.raw` is the *original* text (`۲۵۰ هزار تومان`), while `parseAmount`
+ * reads Latin digits — so the span is normalised first. Normalisation is
+ * length-preserving (domain/normalize.ts), which is why the evidence offsets stay
+ * valid; only the copy handed to the parser changes.
+ */
+export function candidateAmount(candidate: Candidate): ParsedAmount {
+  return parseAmount(normalizeText(candidate.raw));
+}
+
 /** Where in the original text a value the provider returned actually appears. */
 function locateInText(
   normalizedText: string,
@@ -279,7 +292,8 @@ function planTasks(input: PlanInput, intents: IntentKey[]): TaskPlan[] {
   const orderScope: TaskScope = order ? { orderId: order.id } : conversationScope;
 
   // Ambiguity first: acting on a guess ships the wrong parcel (rule 5).
-  if (ambiguousAssociation && intents.some((intent) => ORDER_SPECIFIC.includes(intent))) {
+  const ambiguous = ambiguousAssociation && intents.some((intent) => ORDER_SPECIFIC.includes(intent));
+  if (ambiguous) {
     push({
       type: "human_review",
       scope: { ...conversationScope, discriminator: "ambiguous_order_association" },
@@ -298,6 +312,12 @@ function planTasks(input: PlanInput, intents: IntentKey[]): TaskPlan[] {
       detail: "متن پیام دستور سیستمی نیست؛ هیچ وضعیت، دسترسی یا مبلغی تغییر نکرد.",
     });
   }
+
+  // When the association is undecided, every order-shaped task below would be a
+  // guess: one review task asks the seller which order it is, and nothing else is
+  // manufactured in the meantime — no tracking task against a random parcel, no
+  // address task against the wrong one.
+  if (ambiguous) return plans.slice(0, 6);
 
   if (has("payment_claim")) {
     if (!order) {
@@ -459,14 +479,14 @@ function paymentMismatch(input: PlanInput): boolean {
 function claimedAmount(input: PlanInput): bigint | null {
   const candidate = findCandidate(input.candidates, input.output.amount?.candidateId);
   if (!candidate) return null;
-  const parsed = parseAmount(candidate.raw);
+  const parsed = candidateAmount(candidate);
   return parsed.amountMinor;
 }
 
 function amountUnitMissing(input: PlanInput): boolean {
   const candidate = findCandidate(input.candidates, input.output.amount?.candidateId);
   if (!candidate) return false;
-  return parseAmount(candidate.raw).amountMinor === null;
+  return candidateAmount(candidate).amountMinor === null;
 }
 
 // ───────────────────────────── helpers ─────────────────────────────

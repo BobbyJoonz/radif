@@ -2,8 +2,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/server/db";
 import { env } from "@/lib/env";
 import { contextHash, PROMPT_VERSION, RULES_VERSION } from "@/server/domain/dedupe";
-import { detectIntents, type IntentScan } from "@/server/domain/intents";
-import { parseAmount } from "@/server/domain/money";
+import { detectIntents } from "@/server/domain/intents";
 import { reasonText as reasonTextForCode, computePriority } from "@/server/domain/priority";
 import { normalizeText } from "@/server/domain/normalize";
 import { clampSpan, extractCandidates, type Candidate } from "@/server/domain/spans";
@@ -20,7 +19,7 @@ import {
 import type { ClaimedJob } from "./claim";
 import { UnrecoverableJob, errorCodeOf, isRetryableError } from "./errors";
 import { detectInjection } from "./injection";
-import { planAnalysis, type PlanInput, type PlanOrder, type TaskPlan } from "./plan";
+import { planAnalysis, candidateAmount, type PlanInput, type PlanOrder, type TaskPlan } from "./plan";
 import { enqueueRecompute } from "./recompute";
 
 /**
@@ -426,7 +425,7 @@ function claimedAmountOf(input: { output: DecisionOutput; candidates: readonly C
   if (!id) return null;
   const candidate = input.candidates.find((entry) => entry.id === id);
   if (!candidate) return null;
-  return parseAmount(candidate.raw).amountMinor;
+  return candidateAmount(candidate).amountMinor;
 }
 
 // ───────────────────────────── writing ─────────────────────────────
@@ -444,11 +443,9 @@ type PersistInput = {
   now: Date;
 };
 
-function inputOf(input: PersistInput): PersistInput {
-  return input;
-}
-
 async function persist(input: PersistInput): Promise<void> {
+  const { job, message, run, plan, output, request, latencyMs, claimAmount, currency, now } = input;
+  const tenantId = job.tenantId;
 
   await prisma.$transaction(async (tx) => {
     // A retry must replace its own proposals, and a newer run supersedes the
@@ -478,11 +475,11 @@ async function persist(input: PersistInput): Promise<void> {
       });
     }
 
-    if (plan.intents.includes("payment_claim") && input.plan.tasks.length > 0) {
+    if (plan.intents.includes("payment_claim")) {
       await recordPaymentClaim(tx, {
         tenantId,
         messageId: message.id,
-        orderId: input.plan.tasks.find((task) => task.type === "payment_reconcile")?.orderId ?? null,
+        orderId: plan.tasks.find((task) => task.type === "payment_reconcile")?.orderId ?? null,
         amountMinor: claimAmount,
         currency,
         now,
@@ -536,7 +533,7 @@ async function persist(input: PersistInput): Promise<void> {
         entityType: "Message",
         entityId: message.id,
         after: {
-          provider: request.promptVersion,
+          provider: env.DECISION_PROVIDER,
           intents: plan.intents,
           suggestions: plan.suggestions.length,
           tasks: plan.tasks.length,
@@ -621,6 +618,34 @@ async function upsertTask(
   });
 
   if (!existing) {
+    // A task for the same issue may already exist under a different key — a seed
+    // or a human raised it, or an older rules version used another format. The
+    // contract is "one active task set", not "one key per writer", so the existing
+    // task wins and is left alone: its sentence was written next to the fact.
+    const sameIssue = await tx.task.findFirst({
+      where: {
+        tenantId,
+        type: plan.type,
+        status: { not: "done" },
+        OR: [
+          { messageId },
+          ...(plan.orderId ? [{ orderId: plan.orderId }] : []),
+        ],
+      },
+      select: { id: true },
+    });
+    if (sameIssue) {
+      // Keep the issue visible with the newest deadline, without rewriting what a
+      // human (or the seed) decided it says.
+      if (plan.dueAt) {
+        await tx.task.updateMany({
+          where: { id: sameIssue.id, tenantId, dueAt: null },
+          data: { dueAt: plan.dueAt },
+        });
+      }
+      return;
+    }
+
     await tx.task.create({
       data: { tenantId, ...data, dedupeKey: plan.dedupeKey, createdBy: "system", createdAt: now },
     });
@@ -754,15 +779,3 @@ async function ensureManualReviewTask(tenantId: string, message: MessageForAnaly
 function failureTaskKey(messageId: string): string {
   return `human_review|msg:${messageId}|${ANALYSIS_FAILED}`;
 }
-
-/** The analysis success path's last step: refresh the conversation counters. */
-export async function enqueueRecomputeForMessage(
-  tenantId: string,
-  conversationId: string,
-  messageId: string,
-  now = new Date(),
-): Promise<void> {
-  await enqueueRecompute({ tenantId, conversationId, messageId, now });
-}
-
-export { jobDedupeKey };

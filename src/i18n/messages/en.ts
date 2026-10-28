@@ -1,4 +1,4 @@
-import type { Dictionary } from "./fa";
+﻿import type { Dictionary } from "./fa";
 
 /**
  * English is a real locale, not a translation dump: sentence case, plain verbs,
@@ -132,8 +132,8 @@ export const en: Dictionary = {
     overdue: "overdue",
     needsReview: "need review",
     lastUpdated: "Last updated",
-    dayRail: "Messages today",
-    railNote: "Every bar is one hour, counted from stored messages — not a mock chart.",
+    dayRail: "Last 24 hours",
+    railNote: "One bar per hour of the last 24, counted from stored messages. not a mock chart.",
     statInbound: "Inbound",
     statReplies: "Seller replies",
     statUnanswered: "Unanswered",
@@ -149,7 +149,7 @@ export const en: Dictionary = {
   },
 
   // ─────────────────────────────────────────────────────────────────────────
-  // Page namespaces (ui-screens) — same shape as fa.
+  // Page namespaces (ui-screens). same shape as fa.
   // ─────────────────────────────────────────────────────────────────────────
 
   login: {
@@ -554,7 +554,7 @@ export const en: Dictionary = {
     emptyTitle: "No run recorded",
     emptyBody: "When a message is analysed, the run lands here with its model, latency and cost.",
     emptyAction: "Go to Inbox",
-    notMeasuredLong: "On the mock model, tokens and cost are not recorded — we do not print zero.",
+    notMeasuredLong: "On the mock model, tokens and cost are not recorded. we do not print zero.",
     costUnknown: "Unknown",
     tokensUnknown: "Unknown",
     latencyMeasured: "Latency measured",
@@ -609,3 +609,5 @@ export const en: Dictionary = {
     generic: "Something went wrong. Try again.",
   },
 };
+
+

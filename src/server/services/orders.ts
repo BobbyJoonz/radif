@@ -1,4 +1,4 @@
-import { prisma } from "@/server/db";
+﻿import { prisma } from "@/server/db";
 import type { SessionContext } from "@/server/session";
 import { errors } from "@/server/http";
 import type {
@@ -29,7 +29,7 @@ import {
 import { sumLines } from "@/server/domain/money";
 import { buildReplyPreview } from "@/server/domain/reply";
 import { taskDedupeKey } from "@/server/domain/dedupe";
-import { taskInclude, toTaskRow } from "./tasks";
+import { taskInclude, toQueueRow } from "./tasks";
 import { previewReply as previewReplyFromInbox } from "./inbox";
 
 /**
@@ -226,7 +226,7 @@ export async function getOrder(ctx: SessionContext, orderId: string): Promise<Or
     items: order.items.map(toOrderItemDTO),
     paymentClaims: order.paymentClaims.map(toPaymentClaimDTO),
     shipment: order.shipments[0] ? toShipmentDTO(order.shipments[0]) : null,
-    tasks: tasks.map((task) => toTaskRow(task, now)),
+    tasks: tasks.map((task) => toQueueRow(task, now)),
     audit: audit.map(toAuditEntryDTO),
     suggestions: suggestions.map(toSuggestionDTO),
     replyPreview,
@@ -622,6 +622,24 @@ export async function updateShipment(
         kind: "refused" as const,
         message: "مرسولهٔ این سفارش ارسال شده است؛ تغییر آدرس توسط انسان بررسی می‌شود و وضعیت ارسال تغییر نکرد.",
       };
+    }
+
+    // Before the parcel leaves: an address change is legitimate, but we do not have
+    // the new address, so it becomes a task for a human instead of a silent note.
+    // The shipment itself is untouched either way.
+    if (addressChange) {
+      await ensureTask(tx, {
+        tenantId,
+        type: "address_complete",
+        priority: "P1",
+        title: `ثبت آدرس تازه — سفارش ${order.publicRef}`,
+        detail: "مشتری آدرس را عوض کرده است؛ آدرس کامل تازه باید از مشتری گرفته و ثبت شود.",
+        reasonCode: "address_change",
+        reasonText: "آدرس پیش از ارسال عوض شده و آدرس تازه نیامده است.",
+        orderId: order.id,
+        customerId: order.customerId,
+        dedupeKey: taskDedupeKey("address_complete", { orderId: order.id }),
+      });
     }
 
     // ── tracking code: normalise or refuse, never invent ──

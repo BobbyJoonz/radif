@@ -3,7 +3,7 @@ import { prisma } from "@/server/db";
 import type { Prisma } from "@/generated/prisma/client";
 import type { PriorityValue, SourceValue, TodayDTO, TodayRow } from "@/lib/dto";
 import { reasonText as reasonTextForCode } from "@/server/domain/priority";
-import { dueLabelOf, minutesBetween, nextZonedDay, startOfZonedDay, zonedHour } from "@/server/domain/time";
+import { dueLabelOf, minutesBetween, zonedHour, zonedParts } from "@/server/domain/time";
 import { getLastSync } from "./shell";
 import { taskReasonText } from "./task-view";
 
@@ -17,10 +17,11 @@ import { taskReasonText } from "./task-view";
  *     no human has reviewed yet);
  *   • `items` are the open tasks, overdue first and then by deadline — the order
  *     is the argument, not a colour;
- *   • `dayStrip` is 24 hourly inbound counts of the *tenant's* local day, so the
- *     signal on the rail is the shop's night, not the server's UTC day;
- *   • `stats` are computed from the stored messages of that same day (a "reply"
- *     is a stored outbound message that follows an inbound one);
+ *   • `dayStrip` is 24 hourly inbound counts over a **rolling last-24-hours
+ *     window** in the *tenant's* timezone (bucket 23 is the hour the shop is in
+ *     now), so a shop that answers DMs past midnight still sees its night;
+ *   • `stats` are computed from the stored messages of that same window (a "reply"
+ *     is a stored outbound message that answers an inbound one);
  *   • `lastUpdatedAt` is the newest stored message — the honest "as of" line;
  *   • `paused` is `TenantSettings.postingPaused`, i.e. the shop's own decision.
  *
@@ -85,10 +86,13 @@ export async function getToday(ctx: SessionContext): Promise<TodayDTO> {
   const timeZone = ctx.tenant.timezone;
   const tenantId = ctx.tenant.id;
 
-  const dayStart = startOfZonedDay(now, timeZone);
-  const dayEnd = nextZonedDay(dayStart, timeZone);
+  // A rolling last-24-hours window, aligned to the tenant's clock hour: bucket 23
+  // is the hour the shop is in right now, bucket 0 the same hour one day ago.
+  // A calendar day would read as "dead" for a shop that works past midnight —
+  // which is exactly when this page is used (DIRECTION §0).
+  const window = rollingWindow(now, timeZone);
 
-  const [open, overdue, needsReview, tasks, dayMessages, unanswered, lastUpdatedAt] = await Promise.all([
+  const [open, overdue, needsReview, tasks, windowMessages, unanswered, lastUpdatedAt] = await Promise.all([
     prisma.task.count({ where: { tenantId, status: { in: [...OPEN_STATUSES] } } }),
     prisma.task.count({
       where: { tenantId, status: { in: [...OPEN_STATUSES] }, dueAt: { lt: now } },
@@ -103,9 +107,9 @@ export async function getToday(ctx: SessionContext): Promise<TodayDTO> {
       include: TODAY_INCLUDE,
     }),
     prisma.message.findMany({
-      where: { tenantId, occurredAt: { gte: dayStart, lt: dayEnd } },
-      orderBy: [{ occurredAt: "asc" }, { id: "asc" }],
-      select: { direction: true, occurredAt: true },
+      where: { tenantId, occurredAt: { gte: window.start, lte: now } },
+      orderBy: [{ conversationId: "asc" }, { occurredAt: "asc" }, { id: "asc" }],
+      select: { conversationId: true, direction: true, occurredAt: true },
     }),
     prisma.conversation.count({ where: { tenantId, unrepliedCount: { gt: 0 } } }),
     getLastSync(tenantId),
@@ -114,8 +118,8 @@ export async function getToday(ctx: SessionContext): Promise<TodayDTO> {
   const fallbackSources = await sourceFallbackFor(tenantId, tasks);
 
   const items = tasks.map((task) => toRow(task, now, timeZone, fallbackSources));
-  const stats = computeStats(dayMessages, unanswered);
-  const dayStrip = hourlyInbound(dayMessages, timeZone);
+  const stats = computeStats(windowMessages, unanswered);
+  const dayStrip = hourlyInbound(windowMessages, window, timeZone);
 
   return {
     counts: { open, overdue, needsReview },
@@ -125,6 +129,22 @@ export async function getToday(ctx: SessionContext): Promise<TodayDTO> {
     lastUpdatedAt,
     paused: ctx.settings.postingPaused,
   };
+}
+
+/** The last 24 clock hours of the tenant's day, as one window. */
+const HOUR_MS = 60 * 60 * 1000;
+
+type RollingWindow = { start: Date; end: Date; hours: Date[] };
+
+function rollingWindow(now: Date, timeZone: string): RollingWindow {
+  // The current *local* hour began `minute:second` ago — computed from the
+  // timezone rather than assuming whole-hour offsets (Tehran is +03:30).
+  const parts = zonedParts(now, timeZone);
+  const msIntoHour = (parts.minute * 60 + parts.second) * 1000 + now.getMilliseconds();
+  const currentHourStart = new Date(now.getTime() - msIntoHour);
+  const start = new Date(currentHourStart.getTime() - 23 * HOUR_MS);
+  const hours = Array.from({ length: 24 }, (_, index) => new Date(start.getTime() + index * HOUR_MS));
+  return { start, end: new Date(currentHourStart.getTime() + HOUR_MS), hours };
 }
 
 /**
@@ -140,50 +160,67 @@ async function countMessagesNeedingReview(tenantId: string): Promise<number> {
   return groups.length;
 }
 
-/** 24 buckets of the tenant's local day, from stored inbound messages only. */
+/**
+ * 24 buckets over the rolling window, from stored inbound messages only.
+ *
+ * `hour` is the bucket's start as a *clock hour* in the tenant's timezone, so the
+ * last bucket carries the current hour and the rail can mark it. A bucket is one
+ * hour wide; every dot on the rail is a message that exists in the database.
+ */
 function hourlyInbound(
   messages: readonly { direction: "inbound" | "outbound"; occurredAt: Date }[],
+  window: RollingWindow,
   timeZone: string,
 ): { hour: number; count: number }[] {
-  const strip = Array.from({ length: 24 }, (_, hour) => ({ hour, count: 0 }));
+  const strip = window.hours.map((bucketStart) => ({ hour: zonedHour(bucketStart, timeZone), count: 0 }));
   for (const message of messages) {
     if (message.direction !== "inbound") continue;
-    const hour = zonedHour(message.occurredAt, timeZone);
-    const bucket = strip[hour];
+    const index = Math.floor((message.occurredAt.getTime() - window.start.getTime()) / HOUR_MS);
+    const bucket = strip[Math.max(0, Math.min(index, 23))];
     if (bucket) bucket.count += 1;
   }
   return strip;
 }
 
 /**
- * Today's volume, honestly:
- *   • `inbound` / `replies` count stored messages of the local day;
+ * The window's volume, honestly:
+ *   • `inbound` / `replies` count stored messages inside the last 24 hours;
  *   • `unanswered` is how many conversations are waiting for our next message
- *     (the worker's `recompute_conversation` keeps that counter from the thread);
- *   • `avgReplyMinutes` pairs each seller reply with the oldest unanswered
- *     customer message it answered. No pairs → `null` ("not measured"), never 0.
+ *     right now (the worker's `recompute_conversation` keeps that counter from the
+ *     thread) — a state, not a count of the window;
+ *   • `avgReplyMinutes` is the mean gap from a customer message to the *next*
+ *     seller reply in the same conversation, over the same window. No pair →
+ *     `null` ("not measured"), never 0 and never a guess.
  */
 function computeStats(
-  messages: readonly { direction: "inbound" | "outbound"; occurredAt: Date }[],
+  messages: readonly { conversationId: string; direction: "inbound" | "outbound"; occurredAt: Date }[],
   unanswered: number,
 ): TodayDTO["stats"] {
   let inbound = 0;
   let replies = 0;
   let waitedMinutes = 0;
   let pairs = 0;
-  let oldestUnanswered: Date | null = null;
+
+  // Messages arrive ordered by conversation and then time, so one pass is enough:
+  // the most recent inbound of the thread being read is the one a reply answers.
+  let conversationId: string | null = null;
+  let pendingInboundAt: Date | null = null;
 
   for (const message of messages) {
+    if (message.conversationId !== conversationId) {
+      conversationId = message.conversationId;
+      pendingInboundAt = null;
+    }
     if (message.direction === "inbound") {
       inbound += 1;
-      if (!oldestUnanswered) oldestUnanswered = message.occurredAt;
+      if (!pendingInboundAt) pendingInboundAt = message.occurredAt;
       continue;
     }
     replies += 1;
-    if (oldestUnanswered) {
-      waitedMinutes += minutesBetween(oldestUnanswered, message.occurredAt);
+    if (pendingInboundAt) {
+      waitedMinutes += minutesBetween(pendingInboundAt, message.occurredAt);
       pairs += 1;
-      oldestUnanswered = null;
+      pendingInboundAt = null;
     }
   }
 

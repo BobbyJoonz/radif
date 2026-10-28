@@ -41,7 +41,12 @@ export type InboxFilter = "all" | "unanswered" | "payment" | "review";
 /** Conversations one queue response may carry. The search is still real. */
 const MAX_CONVERSATIONS = 100;
 const MAX_MESSAGES = 200;
-const PREVIEW_CHARS = 90;
+/**
+ * One line of queue text. Short on purpose: the row also carries the customer,
+ * the source, the counters and the order ref, and a longer preview pushes them
+ * into each other in the rendered layout.
+ */
+const PREVIEW_CHARS = 64;
 
 const ROW_INCLUDE = {
   connection: { select: { channel: true, accountRef: true } },
@@ -229,13 +234,19 @@ function toRow(
     customerName: conversation.customer.displayName,
     handle: handleOf(conversation),
     lastMessageAt: conversation.lastMessageAt?.toISOString() ?? null,
-    lastMessagePreview: lastMessage ? truncateText(lastMessage.text, PREVIEW_CHARS) : "",
+    lastMessagePreview: lastMessage ? previewOf(lastMessage.text) : "",
     unrepliedCount: conversation.unrepliedCount,
     source: sourceOf(conversation, lastMessage?.source),
     pendingSuggestions: extras.pendingSuggestions,
     needsReview: extras.needsReview,
     orderRef: extras.orderRef,
   };
+}
+
+/** One line, collapsed whitespace, cut on a word boundary — never two rows tall. */
+function previewOf(text: string): string {
+  const singleLine = text.replace(/\s+/g, " ").trim();
+  return truncateText(singleLine, PREVIEW_CHARS);
 }
 
 /** The identity on *this* connection wins; a customer may have several. */
@@ -322,6 +333,12 @@ export async function getConversation(
   const tasks = await conversationTasks(tenantId, messageIds, order?.id ?? null);
   const currency = order?.currency ?? ctx.tenant.currency;
 
+  // The header describes the run that produced the proposals the sheet is
+  // showing. A newer run can still be queued (the seller pressed replay, or a
+  // retry is pending); saying "running" next to finished evidence would be a
+  // half-truth, so a succeeded run is preferred and any run is the fallback.
+  const analysis = analysisRun?.status === "succeeded" ? analysisRun : (await latestSucceededRun(tenantId, messageIds)) ?? analysisRun;
+
   return {
     conversation: {
       ...row,
@@ -332,17 +349,26 @@ export async function getConversation(
     suggestions: suggestions.map((suggestion) => toSuggestionDto(suggestion, currency)),
     order: order ? toOrderSummary(order, ctx.settings.slaShipMin) : null,
     tasks,
-    analysis: analysisRun
+    analysis: analysis
       ? {
-          runId: analysisRun.id,
-          provider: analysisRun.provider,
-          model: analysisRun.model,
-          status: analysisRun.status,
-          latencyMs: analysisRun.latencyMs,
-          createdAt: analysisRun.queuedAt.toISOString(),
+          runId: analysis.id,
+          provider: analysis.provider,
+          model: analysis.model,
+          status: analysis.status,
+          latencyMs: analysis.latencyMs,
+          createdAt: analysis.queuedAt.toISOString(),
         }
       : null,
   };
+}
+
+async function latestSucceededRun(tenantId: string, messageIds: string[]) {
+  if (messageIds.length === 0) return null;
+  return prisma.analysisRun.findFirst({
+    where: { tenantId, messageId: { in: messageIds }, status: "succeeded" },
+    orderBy: [{ queuedAt: "desc" }],
+    select: { id: true, provider: true, model: true, status: true, latencyMs: true, queuedAt: true },
+  });
 }
 
 async function resolveOrder(
@@ -526,12 +552,12 @@ function formatAmount(value: string | number, currency: string): string {
 
 // ───────────────────────────── orders & reply ─────────────────────────────
 
-function paymentStatusOf(order: OrderForView): PaymentStatusValue {
+function paymentStatusOf(order: { paymentClaims: { status: string }[] }): PaymentStatusValue {
   const latest = order.paymentClaims[0];
   return (latest?.status as PaymentStatusValue | undefined) ?? "unknown";
 }
 
-function shipmentStatusOf(order: OrderForView): ShipmentStatusValue {
+function shipmentStatusOf(order: { shipments: { status: string }[] }): ShipmentStatusValue {
   const latest = order.shipments[0];
   return (latest?.status as ShipmentStatusValue | undefined) ?? "not_ready";
 }

@@ -5,7 +5,7 @@ import { ReplayButton } from "@/components/today/replay-button";
 import { SignalStrip } from "@/components/today/signal-strip";
 import { getDictionary } from "@/i18n";
 import { isLocale, withLocale, type Locale } from "@/i18n/config";
-import { formatNumber, formatRelative, formatTime, localizeDigits } from "@/i18n/format";
+import { formatFullDate, formatNumber, formatRelative, formatTime, localizeDigits } from "@/i18n/format";
 import { getSessionContext } from "@/server/session";
 import { getToday } from "@/server/services/today";
 import type { TodayRow } from "@/lib/dto";
@@ -63,10 +63,7 @@ export default async function TodayPage({ params }: PageProps<"/[locale]">) {
   const data = await getToday(ctx);
   const now = new Date();
   const nowHour = hourIn(ctx.tenant.timezone, now);
-  const todayLabel = new Intl.DateTimeFormat(locale === "fa" ? "fa-IR-u-ca-persian" : "en-GB", {
-    dateStyle: "full",
-    timeZone: ctx.tenant.timezone,
-  }).format(now);
+  const todayLabel = formatFullDate(now, locale, ctx.tenant.timezone);
   const top = data.items[0];
   const topHref = top
     ? top.conversationId

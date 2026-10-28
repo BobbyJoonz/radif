@@ -1,4 +1,4 @@
-import type { Locale } from "./config";
+﻿import type { Locale } from "./config";
 
 /**
  * Presentation formatting. Pure functions, safe on server and client.
@@ -99,6 +99,29 @@ export function formatDate(date: Date | string, locale: Locale, timeZone = "Asia
   return formatDateTime(date, locale, timeZone, { dateStyle: "full" });
 }
 
+/**
+ * «چهارشنبه ۶ آبان ۱۴۰۵» — composed by hand.
+ *
+ * ICU's fa-IR full-date pattern puts the year first with a comma before the
+ * weekday ("۱۴۰۵ آبان ۶, چهارشنبه"), which is not how a Persian reader says a
+ * date. Reassembling the parts keeps the spoken order on every runtime.
+ */
+export function formatFullDate(date: Date | string, locale: Locale, timeZone = "Asia/Tehran"): string {
+  const d = typeof date === "string" ? new Date(date) : date;
+  if (locale !== "fa") {
+    return new Intl.DateTimeFormat("en-GB", { dateStyle: "full", timeZone }).format(d);
+  }
+  const parts = new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone,
+  }).formatToParts(d);
+  const get = (type: Intl.DateTimeFormatPartTypes) => parts.find((p) => p.type === type)?.value ?? "";
+  return `${get("weekday")} ${get("day")} ${get("month")} ${get("year")}`;
+}
+
 export function formatTime(date: Date | string, locale: Locale, timeZone = "Asia/Tehran"): string {
   return formatDateTime(date, locale, timeZone, { hour: "2-digit", minute: "2-digit" });
 }
@@ -116,3 +139,4 @@ export function formatDuration(ms: number, locale: Locale): string {
 export function machine(value: string): string {
   return latinDigits(value);
 }
+

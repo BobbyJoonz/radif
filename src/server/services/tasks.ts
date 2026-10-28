@@ -1,4 +1,4 @@
-import { prisma } from "@/server/db";
+﻿import { prisma } from "@/server/db";
 import type { SessionContext } from "@/server/session";
 import { errors } from "@/server/http";
 import type { TaskRow, TaskStatusValue } from "@/lib/dto";
@@ -29,6 +29,16 @@ export const taskInclude = TASK_VIEW_INCLUDE;
 export { toTaskRow };
 export type TaskWithRelations = TaskForView;
 
+/**
+ * The queue's row. A finished task is **never** overdue: its deadline stopped
+ * applying when it closed, and a red "overdue" badge on a done task would make the
+ * seller distrust the whole column.
+ */
+export function toQueueRow(task: TaskForView, now: Date): TaskRow {
+  const row = toTaskRow(task, now);
+  return row.status === "done" ? { ...row, overdue: false } : row;
+}
+
 export type ListTasksOptions = {
   status?: TaskStatusValue;
   assigneeId?: string;
@@ -58,7 +68,7 @@ export async function listTasks(ctx: SessionContext, opts: ListTasksOptions = {}
     take: 500,
   });
 
-  return tasks.map((task) => toTaskRow(task, now));
+  return tasks.map((task) => toQueueRow(task, now));
 }
 
 export type UpdateTaskInput = {
@@ -140,6 +150,6 @@ export async function updateTask(
       },
     });
 
-    return toTaskRow(updated, now);
+    return toQueueRow(updated, now);
   });
 }

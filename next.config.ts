@@ -9,14 +9,9 @@ const nextConfig: NextConfig = {
   partialPrefetching: false,
   // Prisma and its driver must stay out of the bundler's module graph.
   serverExternalPackages: ["@prisma/client", "@prisma/adapter-pg", "pg"],
-  turbopack: {
-    rules: {
-      "*.css": {
-        loaders: ["@tailwindcss/turbopack"],
-        as: "*.css",
-      },
-    },
-  },
+  // Tailwind is wired through PostCSS (postcss.config.mjs), not a Turbopack
+  // CSS rule: the rule also matched *.module.css and silently dropped every
+  // CSS module in the app.
 };
 
 export default nextConfig;

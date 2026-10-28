@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Demo seed for Radif.
  *
  * Two shops that must never see each other's data, thirteen conversations in the
@@ -433,7 +433,7 @@ async function main() {
           senderRef: m.dir === "inbound" ? c.handle : (tenantId === TORANJ ? "toranj.studio" : "raha.shoes"),
           text: m.text,
           occurredAt: m.at,
-          analysisState: m.id === "DEMO-MSG-9001" ? "done" : m.dir === "inbound" ? "pending" : "done",
+          analysisState: "done", // seeded history is treated as already analysed; the demo replays a NEW message to exercise the pipeline
         },
       });
     }
@@ -698,7 +698,7 @@ async function main() {
       detail: "مشتری گفته آدرس عوض شده ولی نشانی تازه‌ای نفرستاده است.",
       reasonCode: "address_change_before_shipping",
       reasonText: "آدرس جدید در پیام نیامده",
-      dueAt: hours(-36),
+      dueAt: hours(36),
       orderId: "order_1042",
       messageId: "DEMO-MSG-9001",
       customerId: "cust_negar",
@@ -948,3 +948,5 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
+
+

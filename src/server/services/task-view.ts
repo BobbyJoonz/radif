@@ -1,4 +1,4 @@
-import type { TaskRow } from "@/lib/dto";
+﻿import type { TaskRow } from "@/lib/dto";
 import type { Prisma } from "@/generated/prisma/client";
 import { reasonText as reasonTextForCode } from "@/server/domain/priority";
 
@@ -50,7 +50,7 @@ export function toTaskRow(task: TaskForView, now: Date): TaskRow {
     reasonCode: task.reasonCode,
     reasonText: taskReasonText(task),
     dueAt: task.dueAt?.toISOString() ?? null,
-    overdue: task.dueAt ? task.dueAt.getTime() < now.getTime() : false,
+    overdue: task.status !== "done" && task.dueAt ? task.dueAt.getTime() < now.getTime() : false,
     assigneeName: task.assignee?.name ?? null,
     customerName,
     orderRef: task.order?.publicRef ?? null,
@@ -59,3 +59,4 @@ export function toTaskRow(task: TaskForView, now: Date): TaskRow {
     createdAt: task.createdAt.toISOString(),
   };
 }
+

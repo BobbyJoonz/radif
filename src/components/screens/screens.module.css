@@ -1,4 +1,4 @@
-/* ─────────────────────────────────────────────────────────────────────────────
+﻿/* ─────────────────────────────────────────────────────────────────────────────
    Radif — screen bodies.
    Grammar per screen (DIRECTION.md §3):
      • hairlines group; only objects float (message, sheet, selected row);
@@ -1433,3 +1433,17 @@
     gap: 0;
   }
 }
+
+/* ── Lead fixes after the first rendered review ─────────────────────────────
+   The queue pane was 212px wide but each row carries three chips (order ref,
+   source, unanswered count). The chips kept `nowrap` and overflowed their own
+   boxes, painting over each other. Widen the pane at desk widths, let the meta
+   row wrap, and keep the preview to one line. */
+@media (min-width: 1240px) {
+  .inbox { grid-template-columns: 288px minmax(0, 1fr) 372px; }
+}
+.qrowPreview { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.qrowMeta { flex-wrap: wrap; row-gap: 2px; overflow: hidden; }
+
+/* WCAG 2.5.8 — compact links in dense rows keep a 24px target. */
+.rowLink, .handle { display: inline-flex; align-items: center; min-height: 24px; }

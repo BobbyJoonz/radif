@@ -1,4 +1,4 @@
-/**
+﻿/**
  * Shared vocabulary: the shell, the status words, and the Today screen.
  *
  * House rule (DIRECTION.md §4): a seller reads a fact, not a system message.
@@ -142,8 +142,8 @@ export const fa = {
     overdue: "عقب‌افتاده",
     needsReview: "نیازمند بررسی",
     lastUpdated: "آخرین به‌روزرسانی",
-    dayRail: "پیام‌های امروز",
-    railNote: "این نوار از شمارش واقعی پیام‌های ذخیره‌شده ساخته می‌شود؛ هر میله یک ساعت است.",
+    dayRail: "۲۴ ساعت گذشته",
+    railNote: "این نوار از شمارش واقعی پیام‌های ذخیره‌شده ساخته می‌شود؛ هر میله یک ساعت از ۲۴ ساعت گذشته است.",
     statInbound: "پیام ورودی",
     statReplies: "پاسخ فروشنده",
     statUnanswered: "بی‌پاسخ از آخرین پاسخ",
@@ -626,3 +626,4 @@ export const fa = {
 };
 
 export type Dictionary = typeof fa;
+
