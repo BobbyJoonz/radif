@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ردیف — کارِ امروز</title>
+<style>
+  @font-face{font-family:Peyda;src:url("/fonts/peyda/Peyda-Regular.woff2") format("woff2");font-weight:400;font-display:swap}
+  @font-face{font-family:Peyda;src:url("/fonts/peyda/Peyda-Medium.woff2") format("woff2");font-weight:500;font-display:swap}
+  @font-face{font-family:Peyda;src:url("/fonts/peyda/Peyda-SemiBold.woff2") format("woff2");font-weight:600;font-display:swap}
+  @font-face{font-family:Peyda;src:url("/fonts/peyda/Peyda-Bold.woff2") format("woff2");font-weight:700;font-display:swap}
+  @font-face{font-family:Peyda;src:url("/fonts/peyda/Peyda-ExtraBold.woff2") format("woff2");font-weight:800;font-display:swap}
+  @font-face{font-family:Peyda;src:url("/fonts/peyda/Peyda-Black.woff2") format("woff2");font-weight:900;font-display:swap}
+
+  :root{
+    --background:#000014;
+    --surface:#0B0B3F;
+    --surface-raised:#11115A;
+    --border:#333377;
+    --primary:#FF852E;
+    --foreground:#ECECF6;
+    --muted-foreground:#B5B6DD;
+
+    --rule:rgba(51,51,119,.62);
+    --rule-soft:rgba(51,51,119,.34);
+    --primary-dim:rgba(255,133,46,.14);
+    --font-ui:Peyda, "Segoe UI", Tahoma, sans-serif;
+
+    --s1:4px; --s2:8px; --s3:12px; --s4:16px; --s5:24px; --s6:32px; --s7:48px; --s8:64px;
+
+    --t-display:34px; --t-h1:26px; --t-h2:20px; --t-h3:16px;
+    --t-body:15px; --t-small:13px; --t-meta:12px;
+
+    --radius:12px;
+    --ease-out:cubic-bezier(.2,.8,.2,1);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--background);
+    color:var(--foreground);
+    font-family:var(--font-ui);
+    font-size:var(--t-body);
+    line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:optimizeLegibility;
+    font-variant-numeric:tabular-nums;
+  }
+  ::selection{background:var(--primary);color:var(--background)}
+  a{color:inherit}
+  .wrap{max-width:1440px;margin:0 auto;padding:0 var(--s7)}
+
+  /* ---------- top bar ---------- */
+  .topbar{
+    display:flex;align-items:center;gap:var(--s5);
+    height:64px;border-bottom:1px solid var(--rule);
+  }
+  .brand{display:flex;align-items:baseline;gap:10px}
+  .brand b{font-weight:900;font-size:22px;letter-spacing:-.01em;line-height:1}
+  .brand span{font-size:var(--t-meta);color:var(--muted-foreground);letter-spacing:.06em}
+  .shop{
+    color:var(--muted-foreground);font-size:var(--t-small);
+    padding-inline-start:var(--s5);border-inline-start:1px solid var(--rule-soft);
+  }
+  .shop b{color:var(--foreground);font-weight:600}
+  .spacer{flex:1}
+  .demo{
+    display:inline-flex;align-items:center;gap:6px;
+    font-size:var(--t-meta);color:var(--primary);
+    border:1px solid rgba(255,133,46,.45);border-radius:999px;
+    padding:3px 10px 4px;letter-spacing:.02em;
+  }
+  .demo i{width:5px;height:5px;border-radius:50%;background:var(--primary);display:block}
+  .lang{display:flex;border:1px solid var(--rule);border-radius:8px;overflow:hidden}
+  .lang button{
+    font:inherit;font-size:var(--t-meta);font-weight:500;
+    background:transparent;color:var(--muted-foreground);border:0;
+    padding:5px 11px 6px;cursor:pointer;letter-spacing:.04em;
+  }
+  .lang button[aria-pressed="true"]{background:var(--surface-raised);color:var(--foreground)}
+  .lang button:focus-visible{outline:2px solid var(--primary);outline-offset:-2px}
+
+  /* ---------- page head ---------- */
+  .head{
+    display:grid;grid-template-columns:1fr auto;align-items:end;
+    gap:var(--s6);padding:var(--s7) 0 var(--s5);
+  }
+  h1{
+    margin:0 0 var(--s3);font-size:var(--t-display);font-weight:800;
+    letter-spacing:-.015em;line-height:1.2;text-wrap:balance;
+  }
+  .counts{display:flex;align-items:center;gap:0;margin:0;font-size:var(--t-body);color:var(--muted-foreground)}
+  .counts b{color:var(--foreground);font-weight:600}
+  .counts .hot b{color:var(--primary)}
+  .counts span{padding:0 var(--s3);border-inline-end:1px solid var(--rule-soft)}
+  .counts span:first-child{padding-inline-start:0}
+  .counts span:last-child{border:0}
+  .clock{text-align:left;font-size:var(--t-small);color:var(--muted-foreground);display:grid;gap:2px}
+  .clock b{color:var(--foreground);font-weight:500}
+  .clock em{font-style:normal;font-size:var(--t-meta);color:var(--muted-foreground);opacity:.8}
+
+  /* ---------- body grid ---------- */
+  .grid{display:grid;grid-template-columns:minmax(0,1fr) 288px;gap:var(--s7);align-items:start}
+
+  /* ---------- ledger ---------- */
+  .ledger{border-top:1px solid var(--rule)}
+  .lhead,.lrow{
+    display:grid;
+    grid-template-columns:26px minmax(0,1.5fr) minmax(0,1.35fr) minmax(0,1.15fr) 96px 22px;
+    gap:var(--s4);align-items:center;
+  }
+  .lhead{
+    padding:var(--s2) 0;font-size:var(--t-meta);font-weight:500;
+    color:var(--muted-foreground);letter-spacing:.04em;
+    border-bottom:1px solid var(--rule-soft);
+  }
+  .lhead > div:last-child{grid-column:span 2}
+  .lrow{
+    position:relative;padding:var(--s4) 0;border-bottom:1px solid var(--rule-soft);
+    cursor:pointer;transition:background-color 160ms var(--ease-out);
+  }
+  .lrow:hover{background:rgba(17,17,90,.42)}
+  .lrow:focus-visible{outline:2px solid var(--primary);outline-offset:-2px}
+  .lrow[data-selected="true"]{background:var(--surface)}
+  .lrow[data-selected="true"]::before{
+    content:"";position:absolute;inset-inline-end:-1px;top:0;bottom:0;width:2px;background:var(--primary);
+  }
+  .mark{width:3px;height:26px;border-radius:2px;background:var(--rule);justify-self:center}
+  .lrow[data-p="1"] .mark{background:var(--primary);height:34px}
+  .lrow[data-p="2"] .mark{background:var(--muted-foreground);opacity:.55}
+  .who{display:flex;flex-direction:column;gap:2px;min-width:0}
+  .who b{font-weight:600;font-size:var(--t-h3);letter-spacing:-.005em}
+  .who small{
+    font-size:var(--t-meta);color:var(--muted-foreground);
+    display:flex;align-items:center;gap:6px;
+  }
+  .ref{unicode-bidi:isolate;direction:ltr;font-size:var(--t-meta);color:var(--muted-foreground)}
+  .why{font-size:var(--t-small);color:var(--muted-foreground);line-height:1.5}
+  .why b{color:var(--muted-foreground);font-weight:500}
+  .next{font-size:var(--t-small);color:var(--foreground);line-height:1.5}
+  .next span{display:block;font-size:var(--t-meta);color:var(--muted-foreground)}
+  .due{text-align:left;font-size:var(--t-small);font-variant-numeric:tabular-nums}
+  .due[data-late="true"]{color:var(--primary);font-weight:600}
+  .due small{display:block;font-size:var(--t-meta);color:var(--muted-foreground);font-weight:400}
+  .chev{color:var(--muted-foreground);opacity:.55;font-size:15px;justify-self:center}
+  .src{
+    position:absolute;inset-inline-start:0;top:calc(var(--s4) - 2px);
+    font-size:10px;letter-spacing:.04em;color:var(--muted-foreground);opacity:.55;
+  }
+
+  /* ---------- day rail ---------- */
+  .rail{display:grid;gap:var(--s5);position:sticky;top:var(--s5);padding-top:6px}
+  .rail h2{margin:0;font-size:var(--t-small);font-weight:600;color:var(--muted-foreground);letter-spacing:.03em}
+  .strip{display:flex;gap:3px;align-items:flex-end;height:96px;border-bottom:1px solid var(--rule-soft);padding-bottom:6px}
+  .strip i{
+    flex:1;display:block;background:var(--surface-raised);border-radius:1px 1px 0 0;
+    transform-origin:bottom;min-height:3px;
+  }
+  .strip i.on{background:var(--primary)}
+  .strip i.peak{background:var(--primary);opacity:.95}
+  .hours{display:flex;justify-content:space-between;font-size:10px;color:var(--muted-foreground);opacity:.75;font-variant-numeric:tabular-nums}
+  .railstats{display:grid;gap:var(--s2);font-size:var(--t-small);color:var(--muted-foreground)}
+  .railstats div{display:flex;justify-content:space-between;border-bottom:1px dotted var(--rule-soft);padding-bottom:6px}
+  .railstats b{color:var(--foreground);font-weight:600}
+  .railnote{font-size:var(--t-meta);color:var(--muted-foreground);line-height:1.6;opacity:.85}
+
+  /* ---------- evidence region ---------- */
+  .second{margin-top:var(--s8);border-top:1px solid var(--rule);padding-top:var(--s6)}
+  .second-head{display:flex;align-items:baseline;gap:var(--s4);margin-bottom:var(--s5)}
+  .second-head h2{margin:0;font-size:var(--t-h1);font-weight:700;letter-spacing:-.01em}
+  .second-head p{margin:0;font-size:var(--t-small);color:var(--muted-foreground)}
+  .evidence{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:var(--s7)}
+  .thread{display:grid;gap:var(--s4);position:relative}
+  .msg{display:grid;gap:6px;max-width:44ch}
+  .msg .meta{font-size:var(--t-meta);color:var(--muted-foreground);display:flex;gap:8px;align-items:center}
+  .msg .meta time{font-variant-numeric:tabular-nums}
+  .bubble{
+    background:var(--surface);border:1px solid var(--rule-soft);border-radius:var(--radius);
+    border-start-end-radius:3px;padding:12px 14px;font-size:var(--t-body);line-height:1.75;
+  }
+  .bubble mark{
+    background:var(--primary-dim);color:var(--foreground);
+    box-shadow:inset 0 -1px 0 rgba(255,133,46,.55);border-radius:3px;padding:0 3px;
+  }
+  .msg.out .bubble{background:transparent;border-style:dashed;color:var(--muted-foreground)}
+  .fields{display:grid;gap:0;border-top:1px solid var(--rule-soft)}
+  .field{
+    display:grid;grid-template-columns:minmax(0,1fr) auto;gap:var(--s3);
+    padding:var(--s3) 0;border-bottom:1px solid var(--rule-soft);align-items:center;
+  }
+  .field dt{font-size:var(--t-meta);color:var(--muted-foreground);margin:0 0 2px}
+  .field dd{margin:0;font-size:var(--t-body);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .pill{
+    font-size:var(--t-meta);border:1px solid var(--rule);border-radius:999px;
+    padding:2px 9px 3px;color:var(--muted-foreground);white-space:nowrap;
+  }
+  .pill.ok{color:var(--foreground);border-color:rgba(255,133,46,.4)}
+  .pill.wait{color:var(--primary);border-color:rgba(255,133,46,.4);background:rgba(255,133,46,.07)}
+  .empty-value{color:var(--muted-foreground);font-size:var(--t-small);font-style:normal;border-bottom:1px dashed var(--rule);padding-bottom:1px}
+  .actions{display:flex;gap:var(--s3);margin-top:var(--s4);align-items:center}
+  .btn{
+    font:inherit;font-size:var(--t-small);font-weight:600;border-radius:8px;
+    padding:9px 16px 10px;cursor:pointer;border:1px solid transparent;
+    transition:background-color 140ms var(--ease-out),border-color 140ms var(--ease-out);
+  }
+  .btn.primary{background:var(--primary);color:#1A0B00;border-color:var(--primary)}
+  .btn.primary:hover{background:#FFA45E}
+  .btn.ghost{background:transparent;color:var(--foreground);border-color:var(--border)}
+  .btn.ghost:hover{background:var(--surface)}
+  .btn:focus-visible,.linkish:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+  .linkish{background:none;border:0;color:var(--primary);font:inherit;font-size:var(--t-small);cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+  .svg-thread{position:absolute;inset:0;pointer-events:none;overflow:visible}
+  .svg-thread path{fill:none;stroke:var(--primary);stroke-width:1.2;opacity:.9}
+  .foot{margin-top:var(--s8);padding:var(--s5) 0 var(--s8);border-top:1px solid var(--rule-soft);font-size:var(--t-meta);color:var(--muted-foreground);display:flex;justify-content:space-between}
+
+  @media (max-width:1100px){
+    .grid{grid-template-columns:minmax(0,1fr)}
+    .rail{position:static;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--s4);display:grid}
+    .strip{grid-column:1/-1;height:64px}
+    .hours{grid-column:1/-1}
+    .evidence{grid-template-columns:minmax(0,1fr)}
+  }
+  @media (max-width:720px){
+    .wrap{padding:0 var(--s5)}
+    .head{grid-template-columns:1fr;padding-top:var(--s6);gap:var(--s4)}
+    .clock{text-align:start}
+    .lhead{display:none}
+    .lrow{grid-template-columns:20px minmax(0,1fr) auto;grid-template-areas:"m who due" "m why why" "m next next";row-gap:4px}
+    .lrow .mark{grid-area:m}
+    .who{grid-area:who}
+    .why{grid-area:why}
+    .next{grid-area:next;font-size:var(--t-meta)}
+    .due{grid-area:due}
+    .chev{display:none}
+    h1{font-size:28px}
+    .rail{grid-template-columns:1fr}
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{animation:none!important;transition:none!important}
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar wrap">
+  <div class="brand"><b>ردیف</b><span>RADIF</span></div>
+  <div class="shop">فروشگاه <b>آتلیهٔ ترنج</b></div>
+  <div class="spacer"></div>
+  <span class="demo"><i></i>دادهٔ نمایشی</span>
+  <div class="lang" role="group" aria-label="زبان">
+    <button aria-pressed="true">فا</button>
+    <button aria-pressed="false">EN</button>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="head">
+    <div>
+      <h1>کارِ امروز</h1>
+      <p class="counts">
+        <span><b>۹</b> کار باز</span>
+        <span class="hot"><b>۳</b> عقب‌افتاده</span>
+        <span><b>۱</b> نیازمند بررسی</span>
+        <span>آخرین به‌روزرسانی <b>۲ دقیقه</b> پیش</span>
+      </p>
+    </div>
+    <div class="clock">
+      <b>چهارشنبه ۶ آبان ۱۴۰۵</b>
+      <em>۲۱:۳۰ به وقت تهران · منطقهٔ ۱</em>
+    </div>
+  </div>
+
+  <div class="grid">
+    <section class="ledger" aria-label="صف کار امروز">
+      <div class="lhead" aria-hidden="true">
+        <div></div><div>مشتری و سفارش</div><div>چرا اینجا</div><div>اقدام بعدی</div><div>موعد</div><div></div>
+      </div>
+
+      <article class="lrow" data-p="1" data-selected="true" tabindex="0">
+        <span class="mark" aria-hidden="true"></span>
+        <div class="who">
+          <b>نگار احمدی</b>
+          <small><span class="ref">DEMO-ORD-1042</span> · <span>۲ قلم</span> · <span>بازپخش</span></small>
+        </div>
+        <div class="why">اعلام پرداخت · درخواست رهگیری · <b>تغییر آدرس</b></div>
+        <div class="next">تطبیق پرداخت و تکمیل آدرس<span>پرداخت بررسی‌نشده · آدرس جدید نامشخص</span></div>
+        <div class="due" data-late="true">۲ روز پیش<small>مهلت ارسال گذشته</small></div>
+        <div class="chev" aria-hidden="true">‹</div>
+      </article>
+
+      <article class="lrow" data-p="1" tabindex="0">
+        <span class="mark" aria-hidden="true"></span>
+        <div class="who">
+          <b>شیرین کیانی</b>
+          <small><span class="ref">DEMO-ORD-1039</span> · <span>۱ قلم</span> · <span>ورودی فایل</span></small>
+        </div>
+        <div class="why">مبلغ بدون واحد روشن · نیاز به بررسی</div>
+        <div class="next">تأیید مبلغ با فروشنده<span>مقدار پیشنهادی قطعی نیست</span></div>
+        <div class="due" data-late="true">امروز ۱۶:۰۰<small>۳ ساعت گذشته</small></div>
+        <div class="chev" aria-hidden="true">‹</div>
+      </article>
+
+      <article class="lrow" data-p="2" tabindex="0">
+        <span class="mark" aria-hidden="true"></span>
+        <div class="who">
+          <b>حسین مرادی</b>
+          <small><span class="ref">DEMO-ORD-1031</span> · <span>سؤال محصول</span></small>
+        </div>
+        <div class="why">موجودی شال ترنج · پرسش قیمت</div>
+        <div class="next">پاسخ آماده: موجودی و قیمت<span>از کاتالوگ تأییدشده</span></div>
+        <div class="due">امروز ۱۸:۰۰<small>۱ ساعت مانده</small></div>
+        <div class="chev" aria-hidden="true">‹</div>
+      </article>
+
+      <article class="lrow" data-p="2" tabindex="0">
+        <span class="mark" aria-hidden="true"></span>
+        <div class="who">
+          <b>الهام صادقی</b>
+          <small><span>بدون سفارش باز</span> · <span>مشتری تازه</span></small>
+        </div>
+        <div class="why">درخواست تکرار خرید · آدرس ناقص</div>
+        <div class="next">ساخت پیش‌نویس از سفارش ۹۹۸<span>۲ شناسهٔ کانالی</span></div>
+        <div class="due">فردا ۱۱:۰۰<small>زمان پیشنهادی</small></div>
+        <div class="chev" aria-hidden="true">‹</div>
+      </article>
+
+      <article class="lrow" data-p="2" tabindex="0">
+        <span class="mark" aria-hidden="true"></span>
+        <div class="who">
+          <b>رضا نیک‌پور</b>
+          <small><span class="ref">DEMO-ORD-1027</span> · <span>۲ قلم</span></small>
+        </div>
+        <div class="why">شکایت تأخیر · ادعای دریافت نکردن</div>
+        <div class="next">ارجاع به مسئول<span>کد رهگیری ثبت نشده</span></div>
+        <div class="due">دیروز<small>پاسخ داده نشده</small></div>
+        <div class="chev" aria-hidden="true">‹</div>
+      </article>
+    </section>
+
+    <aside class="rail" aria-label="نمای روز">
+      <div>
+        <h2>پیام‌های امروز</h2>
+        <div class="strip" aria-hidden="true">
+          <i style="height:14%"></i><i style="height:9%"></i><i style="height:6%"></i><i style="height:11%"></i>
+          <i style="height:20%"></i><i style="height:34%"></i><i style="height:52%"></i><i style="height:86%"></i>
+          <i class="peak" style="height:100%"></i><i style="height:74%"></i><i class="on" style="height:58%"></i><i style="height:41%"></i>
+          <i style="height:30%"></i><i class="on" style="height:47%"></i><i style="height:62%"></i><i style="height:55%"></i>
+          <i style="height:38%"></i><i class="on" style="height:44%"></i><i style="height:26%"></i><i style="height:18%"></i>
+          <i style="height:12%"></i><i style="height:8%"></i><i style="height:5%"></i><i style="height:3%"></i>
+        </div>
+        <div class="hours"><span>۰</span><span>۶</span><span>۱۲</span><span>۱۸</span><span>۲۴</span></div>
+      </div>
+      <div class="railstats">
+        <div><span>پیام ورودی</span><b>۲۳</b></div>
+        <div><span>پاسخ فروشنده</span><b>۱۴</b></div>
+        <div><span>بی‌پاسخ از آخرین پاسخ</span><b>۳</b></div>
+        <div><span>میانگین پاسخ</span><b>۴۱ دقیقه</b></div>
+      </div>
+      <p class="railnote">این نوار از شمارش واقعی پیام‌های ذخیره‌شده ساخته می‌شود، نه از دادهٔ ساختگی. هر میله یک ساعت است.</p>
+    </aside>
+  </div>
+
+  <section class="second" aria-labelledby="ev-title">
+    <div class="second-head">
+      <h2 id="ev-title">سفارش ۱۰۴۲ · نگار احمدی</h2>
+      <p>پیشنهادهای سیستم با شاهد پیام</p>
+    </div>
+    <div class="evidence">
+      <div class="thread">
+        <div class="msg">
+          <div class="meta"><time>۲۱:۰۴</time><span>نگار احمدی</span><span>· بازپخش</span></div>
+          <p class="bubble">
+            <mark id="ev-pay">واریز کردم</mark>، کد رهگیری رو می‌فرستید؟
+            <mark id="ev-addr">آدرسم هم عوض شده</mark>، هنوز نفرستادید؟
+          </p>
+        </div>
+        <div class="msg out">
+          <div class="meta"><time>۲۰:۱۲</time><span>شما</span></div>
+          <p class="bubble">سفارش شما در حال آماده‌سازی است.</p>
+        </div>
+        <svg class="svg-thread" viewBox="0 0 2 2" preserveAspectRatio="none" aria-hidden="true"></svg>
+      </div>
+
+      <div>
+        <dl class="fields">
+          <div class="field">
+            <div>
+              <dt>نوع درخواست (۳ مورد هم‌زمان)</dt>
+              <dd>اعلام پرداخت<span class="pill wait">بررسی‌نشده</span> · درخواست رهگیری · تغییر آدرس</dd>
+            </div>
+            <span class="pill">پیشنهاد</span>
+          </div>
+          <div class="field">
+            <div>
+              <dt>سفارش مرتبط</dt>
+              <dd><span class="ref">DEMO-ORD-1042</span><span class="pill ok">تطبیق با دلیل: همان گفتگو</span></dd>
+            </div>
+            <span class="pill">پیشنهاد</span>
+          </div>
+          <div class="field">
+            <div>
+              <dt>آدرس</dt>
+              <dd><span class="empty-value">خالی — پیام آدرس تازه‌ای نگفته است</span></dd>
+            </div>
+            <span class="pill">نیاز به تکمیل</span>
+          </div>
+          <div class="field">
+            <div>
+              <dt>کد رهگیری</dt>
+              <dd><span class="empty-value">ثبت نشده</span><span class="pill wait">وظیفهٔ پیگیری ساخته شد</span></dd>
+            </div>
+            <span class="pill">دادهٔ ثبت‌شده</span>
+          </div>
+        </dl>
+        <div class="actions">
+          <button class="btn primary">بازبینی پیش‌نویس</button>
+          <button class="linkish">مشاهدهٔ پیام‌های گفتگو</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="foot">
+    <span>ردیف · نسخهٔ نمایشی · دادهٔ ساختگی با شناسهٔ DEMO</span>
+    <span>فارسی / English</span>
+  </div>
+</main>
+
+<script>
+  // The signature, still version: a hairline thread from each proposed field to the
+  // exact span in the message that supports it. Runs only when motion is welcome.
+  (function(){
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const rows = [...document.querySelectorAll('.lrow')];
+    if (!reduce) {
+      rows.forEach((r,i) => {
+        r.animate([{opacity:0, transform:'translateY(6px)'},{opacity:1, transform:'none'}],
+          {duration:320, delay:60*i, easing:'cubic-bezier(.2,.8,.2,1)', fill:'both'});
+      });
+    }
+  })();
+</script>
+</body>
+</html>
