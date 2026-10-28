@@ -61,7 +61,7 @@ export function formatMoney(
   return `${num} ${currency}`;
 }
 
-const RTF = new Intl.RelativeTimeFormat;
+const RTF = Intl.RelativeTimeFormat;
 
 /** "۲ دقیقه پیش" / "۳ روز پیش" / "فردا" — relative near now, absolute far away. */
 export function formatRelative(date: Date | string, now: Date, locale: Locale): string {

@@ -191,6 +191,21 @@ export const fa = {
     changedLocale: "زبان صفحه عوض شد.",
   },
 
+  /** The intent vocabulary, shared by Inbox (proposals) and Evaluation (runs). */
+  intent: {
+    product_question: "پرسش محصول",
+    new_order: "سفارش تازه",
+    repeat_order: "سفارش تکراری",
+    payment_claim: "اعلام پرداخت",
+    order_status: "پیگیری سفارش",
+    tracking_request: "درخواست رهگیری",
+    address_change: "تغییر آدرس",
+    cancellation: "لغو سفارش",
+    refund_or_return: "مرجوعی",
+    complaint: "شکایت",
+    other_unknown: "نامشخص",
+  },
+
   inbox: {
     title: "صندوق گفتگو",
     queueLabel: "فهرست گفتگوها",
@@ -247,6 +262,16 @@ export const fa = {
     inbound: "پیام مشتری",
     attachments: "پیوست",
     stateLoading: "در حال آوردن گفتگو…",
+    fields: {
+      intent: "نیت پیام",
+      amount: "مبلغ",
+      product: "کالا",
+      quantity: "تعداد",
+      address: "آدرس",
+      tracking: "کد رهگیری",
+      phone: "تلفن",
+      other: "مقدار",
+    },
   },
 
   orders: {

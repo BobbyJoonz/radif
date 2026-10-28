@@ -176,6 +176,21 @@ export const en: Dictionary = {
     changedLocale: "Page language changed.",
   },
 
+  /** The intent vocabulary, shared by Inbox (proposals) and Evaluation (runs). */
+  intent: {
+    product_question: "Product question",
+    new_order: "New order",
+    repeat_order: "Repeat order",
+    payment_claim: "Payment claim",
+    order_status: "Order status",
+    tracking_request: "Tracking request",
+    address_change: "Address change",
+    cancellation: "Cancellation",
+    refund_or_return: "Return or refund",
+    complaint: "Complaint",
+    other_unknown: "Unclear",
+  },
+
   inbox: {
     title: "Inbox",
     queueLabel: "Conversation list",
@@ -232,6 +247,16 @@ export const en: Dictionary = {
     inbound: "Customer message",
     attachments: "Attachment",
     stateLoading: "Loading the conversation…",
+    fields: {
+      intent: "Intent",
+      amount: "Amount",
+      product: "Item",
+      quantity: "Quantity",
+      address: "Address",
+      tracking: "Tracking code",
+      phone: "Phone",
+      other: "Value",
+    },
   },
 
   orders: {
