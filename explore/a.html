@@ -1,16 +1,16 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="fa" dir="rtl">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ردیف — کارِ امروز</title>
 <style>
-  @font-face{font-family:Peyda;src:url("/fonts/peyda/Peyda-Regular.woff2") format("woff2");font-weight:400;font-display:swap}
-  @font-face{font-family:Peyda;src:url("/fonts/peyda/Peyda-Medium.woff2") format("woff2");font-weight:500;font-display:swap}
-  @font-face{font-family:Peyda;src:url("/fonts/peyda/Peyda-SemiBold.woff2") format("woff2");font-weight:600;font-display:swap}
-  @font-face{font-family:Peyda;src:url("/fonts/peyda/Peyda-Bold.woff2") format("woff2");font-weight:700;font-display:swap}
-  @font-face{font-family:Peyda;src:url("/fonts/peyda/Peyda-ExtraBold.woff2") format("woff2");font-weight:800;font-display:swap}
-  @font-face{font-family:Peyda;src:url("/fonts/peyda/Peyda-Black.woff2") format("woff2");font-weight:900;font-display:swap}
+  @font-face{font-family:Peyda;src:url("../public/fonts/peyda/Peyda-Regular.woff2") format("woff2");font-weight:400;font-display:swap}
+  @font-face{font-family:Peyda;src:url("../public/fonts/peyda/Peyda-Medium.woff2") format("woff2");font-weight:500;font-display:swap}
+  @font-face{font-family:Peyda;src:url("../public/fonts/peyda/Peyda-SemiBold.woff2") format("woff2");font-weight:600;font-display:swap}
+  @font-face{font-family:Peyda;src:url("../public/fonts/peyda/Peyda-Bold.woff2") format("woff2");font-weight:700;font-display:swap}
+  @font-face{font-family:Peyda;src:url("../public/fonts/peyda/Peyda-ExtraBold.woff2") format("woff2");font-weight:800;font-display:swap}
+  @font-face{font-family:Peyda;src:url("../public/fonts/peyda/Peyda-Black.woff2") format("woff2");font-weight:900;font-display:swap}
 
   :root{
     --background:#000014;
@@ -68,14 +68,13 @@
     display:inline-flex;align-items:center;gap:6px;
     font-size:var(--t-meta);color:var(--primary);
     border:1px solid rgba(255,133,46,.45);border-radius:999px;
-    padding:3px 10px 4px;letter-spacing:.02em;
+    padding:3px 10px 4px;letter-spacing:.02em;white-space:nowrap;
   }
   .demo i{width:5px;height:5px;border-radius:50%;background:var(--primary);display:block}
   .lang{display:flex;border:1px solid var(--rule);border-radius:8px;overflow:hidden}
   .lang button{
-    font:inherit;font-size:var(--t-meta);font-weight:500;
-    background:transparent;color:var(--muted-foreground);border:0;
-    padding:5px 11px 6px;cursor:pointer;letter-spacing:.04em;
+    font:inherit;font-size:var(--t-meta);font-weight:500;min-height:32px;min-width:40px;background:transparent;;color:var(--muted-foreground);border:0;
+    padding:6px 12px 7px;cursor:pointer;letter-spacing:.04em;
   }
   .lang button[aria-pressed="true"]{background:var(--surface-raised);color:var(--foreground)}
   .lang button:focus-visible{outline:2px solid var(--primary);outline-offset:-2px}
@@ -95,6 +94,9 @@
   .counts span{padding:0 var(--s3);border-inline-end:1px solid var(--rule-soft)}
   .counts span:first-child{padding-inline-start:0}
   .counts span:last-child{border:0}
+  .headend{display:flex;align-items:center;gap:var(--s5);justify-content:flex-end}
+  .start{display:grid;gap:1px;text-align:center;padding:8px 18px 9px;font-size:var(--t-small)}
+  .start span{display:block;font-size:var(--t-meta);font-weight:500;color:#2A1503}
   .clock{text-align:left;font-size:var(--t-small);color:var(--muted-foreground);display:grid;gap:2px}
   .clock b{color:var(--foreground);font-weight:500}
   .clock em{font-style:normal;font-size:var(--t-meta);color:var(--muted-foreground);opacity:.8}
@@ -123,7 +125,7 @@
   .lrow:focus-visible{outline:2px solid var(--primary);outline-offset:-2px}
   .lrow[data-selected="true"]{background:var(--surface)}
   .lrow[data-selected="true"]::before{
-    content:"";position:absolute;inset-inline-end:-1px;top:0;bottom:0;width:2px;background:var(--primary);
+    content:"";position:absolute;inset-inline-start:-1px;top:0;bottom:0;width:2px;background:var(--primary);
   }
   .mark{width:3px;height:26px;border-radius:2px;background:var(--rule);justify-self:center}
   .lrow[data-p="1"] .mark{background:var(--primary);height:34px}
@@ -158,7 +160,7 @@
   }
   .strip i.on{background:var(--primary)}
   .strip i.peak{background:var(--primary);opacity:.95}
-  .hours{display:flex;justify-content:space-between;font-size:10px;color:var(--muted-foreground);opacity:.75;font-variant-numeric:tabular-nums}
+  .hours{display:flex;justify-content:space-between;font-size:11px;color:var(--muted-foreground);opacity:.75;font-variant-numeric:tabular-nums}
   .railstats{display:grid;gap:var(--s2);font-size:var(--t-small);color:var(--muted-foreground)}
   .railstats div{display:flex;justify-content:space-between;border-bottom:1px dotted var(--rule-soft);padding-bottom:6px}
   .railstats b{color:var(--foreground);font-weight:600}
@@ -234,6 +236,30 @@
     .chev{display:none}
     h1{font-size:28px}
     .rail{grid-template-columns:1fr}
+
+    /* phone top bar: brand + language on one line, demo chip cannot wrap */
+    .topbar{height:auto;flex-wrap:wrap;row-gap:var(--s3);padding-top:var(--s3);padding-bottom:var(--s3);column-gap:var(--s3)}
+    .shop{order:3;flex-basis:100%;padding-inline-start:0;border:0;font-size:var(--t-meta)}
+    .spacer{display:none}
+    .demo{margin-inline-start:auto;order:2;padding:3px 9px 4px}
+    .lang{order:1}
+    .brand b{font-size:20px}
+
+    /* phone counts: two columns, no vertical wrapping */
+    .counts{display:grid;grid-template-columns:1fr 1fr;gap:var(--s2) 0;font-size:var(--t-small)}
+    .counts span{padding:0 var(--s3);border:0;white-space:nowrap}
+    .counts span:nth-child(odd){border-inline-end:1px solid var(--rule-soft)}
+    .counts span:first-child, .counts span:nth-child(2){padding-inline-start:0}
+    .headend{justify-content:space-between;flex-direction:row;align-items:center;gap:var(--s3);margin-top:var(--s2)}
+    .start{width:auto;font-size:var(--t-small);padding:8px 14px 9px;text-align:start}
+    .head{padding-top:var(--s5);padding-bottom:var(--s4)}
+    .clock{text-align:start;font-size:var(--t-meta)}
+
+    /* rows: priority mark on the inline-start edge, no floating accent border */
+    .lrow[data-selected="true"]::before{display:none}
+    .lrow{grid-template-columns:26px minmax(0,1fr) auto;grid-template-areas:"m who due" "m why why" "m next next";row-gap:3px;padding:var(--s4) 0}
+    .lrow .mark{grid-area:m;justify-self:stretch;width:3px;height:100%}
+    .why,.next{line-height:1.6}
   }
   @media (prefers-reduced-motion: reduce){
     *{animation:none!important;transition:none!important}
@@ -264,9 +290,12 @@
         <span>آخرین به‌روزرسانی <b>۲ دقیقه</b> پیش</span>
       </p>
     </div>
-    <div class="clock">
-      <b>چهارشنبه ۶ آبان ۱۴۰۵</b>
-      <em>۲۱:۳۰ به وقت تهران · منطقهٔ ۱</em>
+    <div class="headend">
+      <div class="clock">
+        <b>چهارشنبه ۶ آبان ۱۴۰۵</b>
+        <em>۲۱:۳۰ به وقت تهران · منطقهٔ ۱</em>
+      </div>
+      <button class="btn primary start">شروع از مهم‌ترین<span>۳ کار عقب‌افتاده</span></button>
     </div>
   </div>
 
@@ -442,3 +471,8 @@
 </script>
 </body>
 </html>
+
+
+
+
+

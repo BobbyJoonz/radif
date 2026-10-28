@@ -1,7 +1,15 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
+// Radif — data model (Prisma ORM 7, PostgreSQL 17)
+//
+// Conventions held across every model:
+//   • every tenant-scoped row carries tenantId and is indexed by it;
+//   • parent tables carry @@unique([id, tenantId]) so the migration can add
+//     *composite* foreign keys — a child row can never point at another
+//     tenant's parent (see the tail of prisma/migrations/*_init/migration.sql);
+//   • money is BigInt minor units + currency (no floats, ever);
+//   • timestamps are UTC; working hours / SLA are evaluated in the tenant's
+//     timezone by the server, never by the client and never by message tone;
+//   • "proposed" and "confirmed" are different columns, not a status flag on
+//     one column. A suggestion never overwrites a human decision.
 
 generator client {
   provider = "prisma-client"
@@ -10,4 +18,693 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+// ───────────────────────────── identity & tenancy ─────────────────────────────
+
+model User {
+  id            String   @id @default(cuid())
+  name          String
+  email         String   @unique
+  emailVerified Boolean  @default(false)
+  image         String?
+  locale        String   @default("fa")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  sessions         Session[]
+  accounts         Account[]
+  memberships      Membership[]
+  auditEvents      AuditEvent[]
+  verifiedPayments PaymentClaim[] @relation("PaymentVerifiedBy")
+  assignedTasks    Task[]         @relation("TaskAssignee")
+}
+
+// Better Auth: session / account / verification — field names fixed by the library.
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  ipAddress String?
+  userAgent String?
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+}
+
+model Tenant {
+  id            String   @id @default(cuid())
+  slug          String   @unique
+  nameFa        String
+  nameEn        String
+  timezone      String   @default("Asia/Tehran")
+  currency      String   @default("IRR")
+  isDemo        Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  settings       TenantSettings?
+  memberships    Membership[]
+  connections    ChannelConnection[]
+  customers      Customer[]
+  conversations  Conversation[]
+  messages       Message[]
+  products       Product[]
+  orders         Order[]
+  paymentClaims  PaymentClaim[]
+  shipments      Shipment[]
+  tasks          Task[]
+  suggestions    Suggestion[]
+  analysisRuns   AnalysisRun[]
+  jobs           Job[]
+  outbound       OutboundMessage[]
+  auditEvents    AuditEvent[]
+}
+
+model TenantSettings {
+  tenantId          String   @id
+  workdayStartMin   Int      @default(540)  // 09:00
+  workdayEndMin     Int      @default(1260) // 21:00
+  slaFirstReplyMin  Int      @default(120)
+  slaShipMin        Int      @default(2880) // 48h after confirmation
+  priceFreshnessMin Int      @default(1440)
+  postingPaused     Boolean  @default(false)
+  demoMode          Boolean  @default(true)
+  updatedAt         DateTime @updatedAt
+  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+}
+
+model Membership {
+  id        String         @id @default(cuid())
+  tenantId  String
+  userId    String
+  role      MembershipRole @default(operator)
+  createdAt DateTime       @default(now())
+  tenant    Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, userId])
+  @@index([userId])
+}
+
+enum MembershipRole {
+  owner
+  operator
+}
+
+model ChannelConnection {
+  id              String           @id @default(cuid())
+  tenantId        String
+  channel         Channel          @default(instagram)
+  accountRef      String
+  displayName     String
+  status          ConnectionStatus @default(not_configured)
+  // Token material is stored sealed (AES-256-GCM, key from env) and is never
+  // selected into a page payload. See src/server/crypto/seal.ts.
+  sealedToken     String?
+  tokenExpiresAt  DateTime?
+  lastSyncAt      DateTime?
+  configUpdatedAt DateTime         @default(now())
+  createdAt       DateTime         @default(now())
+
+  tenant        Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  conversations Conversation[]
+  identities    CustomerIdentity[]
+
+  @@unique([tenantId, channel, accountRef])
+  @@index([tenantId])
+}
+
+enum Channel {
+  instagram
+  file
+  replay
+}
+
+enum ConnectionStatus {
+  not_configured
+  ready
+  connected
+  expired
+  revoked
+}
+
+model Customer {
+  id              String    @id @default(cuid())
+  tenantId        String
+  displayName     String
+  phone           String? // E.164, nullable — never required to exist
+  phoneVerifiedAt DateTime?
+  notes           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  tenant        Tenant             @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  identities    CustomerIdentity[]
+  conversations Conversation[]
+  orders        Order[]
+  tasks         Task[]
+  suggestions   Suggestion[]
+
+  @@unique([id, tenantId])
+  @@index([tenantId])
+  @@index([tenantId, phone])
+}
+
+model CustomerIdentity {
+  id           String       @id @default(cuid())
+  tenantId     String
+  customerId   String
+  connectionId String
+  kind         IdentityKind @default(instagram_username)
+  externalRef  String // stored lower-cased; unique per connection
+  verifiedAt   DateTime?
+  createdAt    DateTime     @default(now())
+
+  customer   Customer          @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  connection ChannelConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+
+  @@unique([id, tenantId])
+  @@unique([connectionId, kind, externalRef])
+  @@index([tenantId])
+  @@index([customerId])
+}
+
+enum IdentityKind {
+  instagram_username
+  instagram_user_id
+  phone
+  gift_recipient_phone
+}
+
+// ───────────────────────────── conversations & messages ─────────────────────────────
+
+model Conversation {
+  id             String             @id @default(cuid())
+  tenantId       String
+  connectionId   String
+  customerId     String
+  channelRef     String // provider conversation id, or import-scoped stable key
+  status         ConversationStatus @default(open)
+  lastMessageAt  DateTime?
+  unrepliedCount Int                @default(0)
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  tenant     Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  connection ChannelConnection @relation(fields: [connectionId], references: [id], onDelete: Cascade)
+  customer   Customer          @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  messages   Message[]
+
+  @@unique([id, tenantId])
+  @@unique([connectionId, channelRef])
+  @@index([tenantId, lastMessageAt])
+  @@index([tenantId, customerId])
+}
+
+enum ConversationStatus {
+  open
+  archived
+}
+
+model Message {
+  id             String        @id @default(cuid())
+  tenantId       String
+  conversationId String
+  direction      Direction
+  source         MessageSource
+  externalRef    String // provider message id, or deterministic import key
+  senderRef      String
+  text           String
+  attachments    Json          @default("[]")
+  occurredAt     DateTime
+  ingestState    IngestState   @default(stored)
+  analysisState  AnalysisState @default(pending)
+  createdAt      DateTime      @default(now())
+
+  tenant        Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  conversation  Conversation   @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  analysisRuns  AnalysisRun[]
+  suggestions   Suggestion[]   @relation("SuggestionSourceMessage")
+  tasks         Task[]
+  paymentClaims PaymentClaim[]
+
+  @@unique([id, tenantId])
+  // The single most important uniqueness rule in the product: one provider
+  // event is one message, no matter how many times it is delivered.
+  @@unique([tenantId, source, externalRef])
+  @@index([tenantId, occurredAt])
+  @@index([conversationId, occurredAt])
+  @@index([tenantId, analysisState])
+}
+
+enum Direction {
+  inbound
+  outbound
+}
+
+enum MessageSource {
+  file
+  replay
+  instagram
+  manual
+}
+
+enum IngestState {
+  stored
+  duplicate
+  rejected
+}
+
+enum AnalysisState {
+  pending
+  running
+  done
+  failed
+  needs_human
+}
+
+// ───────────────────────────── catalogue & orders ─────────────────────────────
+
+model Product {
+  id              String   @id @default(cuid())
+  tenantId        String
+  sku             String
+  titleFa         String
+  titleEn         String
+  priceMinor      BigInt // in tenant currency, minor units
+  currency        String   @default("IRR")
+  stockQty        Int?
+  infoConfirmedAt DateTime
+  infoValidUntil  DateTime
+  active          Boolean  @default(true)
+  createdAt       DateTime @default(now())
+
+  tenant     Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  orderItems OrderItem[]
+
+  @@unique([tenantId, sku])
+  @@index([tenantId, active])
+}
+
+model Order {
+  id             String      @id @default(cuid())
+  tenantId       String
+  customerId     String
+  publicRef      String // DEMO-ORD-1042 style, human-facing
+  status         OrderStatus @default(draft)
+  currency       String      @default("IRR")
+  totalMinor     BigInt      @default(0)
+  version        Int         @default(1) // optimistic locking
+  notes          String?
+  confirmedAt    DateTime?
+  confirmedById  String?
+  orderCreatedAt DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  tenant        Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  customer      Customer        @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  items         OrderItem[]
+  paymentClaims PaymentClaim[]
+  shipments     Shipment[]
+  tasks         Task[]
+  suggestions   Suggestion[]
+  outbound      OutboundMessage[]
+  auditEvents   AuditEvent[]
+
+  @@unique([id, tenantId])
+  @@unique([tenantId, publicRef])
+  @@index([tenantId, status])
+  @@index([tenantId, customerId])
+}
+
+enum OrderStatus {
+  draft
+  needs_review
+  confirmed
+  cancelled
+}
+
+model OrderItem {
+  id             String  @id @default(cuid())
+  tenantId       String
+  orderId        String
+  productId      String?
+  titleSnapshot  String
+  qty            Int
+  unitPriceMinor BigInt
+  currency       String  @default("IRR")
+
+  order   Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+  @@index([tenantId])
+}
+
+// A payment claim is the customer's assertion. Verification is a separate act by
+// an authorised human; these are two different rows of truth.
+model PaymentClaim {
+  id              String        @id @default(cuid())
+  tenantId        String
+  orderId         String
+  status          PaymentStatus @default(claimed)
+  amountMinor     BigInt?
+  currency        String        @default("IRR")
+  claimedAt       DateTime      @default(now())
+  sourceMessageId String?
+  verifiedAt      DateTime?
+  verifiedById    String?
+  disputeReason   String?
+  createdAt       DateTime      @default(now())
+
+  tenant        Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  sourceMessage Message? @relation(fields: [sourceMessageId], references: [id], onDelete: SetNull)
+  verifiedBy    User?    @relation("PaymentVerifiedBy", fields: [verifiedById], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, status])
+  @@index([orderId])
+}
+
+enum PaymentStatus {
+  unknown
+  claimed
+  verified
+  disputed
+  refunded
+}
+
+model Shipment {
+  id           String         @id @default(cuid())
+  tenantId     String
+  orderId      String
+  status       ShipmentStatus @default(not_ready)
+  carrier      String?
+  trackingCode String?
+  shippedAt    DateTime?
+  deliveredAt  DateTime?
+  pausedReason String?
+  updatedAt    DateTime       @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  order  Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, status])
+  @@index([orderId])
+}
+
+enum ShipmentStatus {
+  not_ready
+  preparing
+  shipped
+  delivered
+  paused
+}
+
+// ───────────────────────────── analysis & suggestions ─────────────────────────────
+
+model AnalysisRun {
+  id            String         @id @default(cuid())
+  tenantId      String
+  messageId     String
+  provider      String // "mock" | "typesafe"
+  model         String // "mock-v1" | "jev-1.14.0"
+  promptVersion String
+  rulesVersion  String
+  contextHash   String // tenant-scoped hash of the exact context sent
+  status        AnalysisStatus @default(running)
+  typedOutput   Json?
+  probabilities Json?
+  errorCode     String?
+  attempts      Int            @default(1)
+  latencyMs     Int?
+  queuedAt      DateTime       @default(now())
+  startedAt     DateTime?
+  finishedAt    DateTime?
+  tokensIn      Int?
+  tokensOut     Int?
+  costMicroUsd  BigInt? // null = not reported by provider, NEVER 0 as a stand-in
+  rateAt        DateTime?
+  inputRatePerMTok  Decimal? @db.Decimal(12, 6)
+  outputRatePerMTok Decimal? @db.Decimal(12, 6)
+
+  tenant      Tenant       @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  message     Message      @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  suggestions Suggestion[]
+
+  @@unique([id, tenantId])
+  @@index([tenantId, queuedAt])
+  @@index([messageId])
+  @@index([tenantId, contextHash])
+}
+
+enum AnalysisStatus {
+  running
+  succeeded
+  failed
+  invalid_output
+}
+
+model Suggestion {
+  id              String      @id @default(cuid())
+  tenantId        String
+  analysisRunId   String
+  sourceMessageId String
+  orderId         String?
+  customerId      String?
+  field           String // "intent.primary" | "intent.flag.payment_claim" | "order.amount" | ...
+  proposedValue   Json
+  candidateId     String? // span id the model chose, when the value came from text
+  evidenceStart   Int? // character offsets into Message.text (server-verified)
+  evidenceEnd     Int?
+  // reviewState is the human's decision. proposedValue is immutable once written.
+  reviewState     ReviewState @default(proposed)
+  reviewedAt      DateTime?
+  reviewedById    String?
+  correctedValue  Json?
+  confidence      Decimal?    @db.Decimal(5, 4)
+  createdAt       DateTime    @default(now())
+
+  tenant        Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  analysisRun   AnalysisRun @relation(fields: [analysisRunId], references: [id], onDelete: Cascade)
+  sourceMessage Message     @relation("SuggestionSourceMessage", fields: [sourceMessageId], references: [id], onDelete: Cascade)
+  order         Order?      @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  customer      Customer?   @relation(fields: [customerId], references: [id], onDelete: SetNull)
+
+  @@unique([id, tenantId])
+  @@index([tenantId, reviewState])
+  @@index([sourceMessageId])
+  @@index([analysisRunId])
+}
+
+enum ReviewState {
+  proposed
+  accepted
+  corrected
+  rejected
+}
+
+// ───────────────────────────── work ─────────────────────────────
+
+model Task {
+  id          String          @id @default(cuid())
+  tenantId    String
+  type        TaskType
+  status      TaskStatus      @default(open)
+  priority    Priority        @default(P2)
+  title       String
+  detail      String?
+  reasonCode  String // machine-readable: sla_breach | payment_mismatch | ...
+  reasonText  String // one short Persian sentence for the seller
+  dueAt       DateTime?
+  orderId     String?
+  messageId   String?
+  customerId  String?
+  assigneeId  String?
+  createdBy   String          @default("system")
+  // dedupeKey is what stops a replayed message from cloning an active task
+  dedupeKey   String?
+  dedupeState TaskDedupeState @default(active)
+  closedAt    DateTime?
+  closeNote   String?
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+
+  tenant   Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  order    Order?    @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  message  Message?  @relation(fields: [messageId], references: [id], onDelete: SetNull)
+  customer Customer? @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  assignee User?     @relation("TaskAssignee", fields: [assigneeId], references: [id], onDelete: SetNull)
+
+  @@unique([id, tenantId])
+  @@unique([tenantId, dedupeKey])
+  @@index([tenantId, status, dueAt])
+  @@index([tenantId, priority])
+  @@index([orderId])
+}
+
+enum TaskType {
+  payment_reconcile
+  address_complete
+  tracking_followup
+  draft_review
+  customer_reply
+  human_review
+  shipment_action
+  refund_review
+}
+
+enum TaskStatus {
+  open
+  in_progress
+  waiting_customer
+  done
+}
+
+enum Priority {
+  P0
+  P1
+  P2
+  P3
+}
+
+enum TaskDedupeState {
+  active
+  released
+}
+
+// ───────────────────────────── outbox, queue, audit ─────────────────────────────
+
+model OutboundMessage {
+  id              String         @id @default(cuid())
+  tenantId        String
+  orderId         String?
+  conversationId  String?
+  templateKey     String
+  templateVersion String
+  body            String
+  status          OutboundStatus @default(draft)
+  providerRef     String?
+  idempotencyKey  String?
+  queuedAt        DateTime?
+  sentAt          DateTime?
+  failedReason    String?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  order  Order? @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, idempotencyKey])
+  @@index([tenantId, status])
+  @@index([orderId])
+}
+
+enum OutboundStatus {
+  draft
+  queued
+  sending
+  sent
+  failed
+  delivery_unknown
+}
+
+// Durable queue on Postgres: SELECT ... FOR UPDATE SKIP LOCKED + a lease.
+model Job {
+  id          String    @id @default(cuid())
+  tenantId    String
+  type        JobType
+  payload     Json
+  status      JobStatus @default(pending)
+  dedupeKey   String?
+  runAt       DateTime  @default(now())
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(5)
+  leaseOwner  String?
+  leaseUntil  DateTime?
+  lastError   String?
+  finishedAt  DateTime?
+  createdAt   DateTime  @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, dedupeKey])
+  @@index([status, runAt])
+  @@index([tenantId, type, status])
+}
+
+enum JobType {
+  analyze_message
+  build_draft
+  recompute_conversation
+  send_outbound
+}
+
+enum JobStatus {
+  pending
+  running
+  succeeded
+  failed
+  dead
+}
+
+model AuditEvent {
+  id         String    @id @default(cuid())
+  tenantId   String
+  actorType  ActorType @default(system)
+  actorId    String?
+  action     String
+  entityType String
+  entityId   String
+  before     Json?
+  after      Json?
+  orderId    String?
+  createdAt  DateTime  @default(now())
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  actor  User?  @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  order  Order? @relation(fields: [orderId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, createdAt])
+  @@index([tenantId, entityType, entityId])
+}
+
+enum ActorType {
+  system
+  user
+  demo
 }

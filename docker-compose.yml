@@ -1,0 +1,26 @@
+# Optional: run PostgreSQL in Docker instead of the bundled portable cluster.
+#   docker compose up -d
+#   DATABASE_URL="postgresql://radif:radif_dev@127.0.0.1:5435/radif?schema=public"
+# (The portable cluster in scripts/pg-local.ps1 uses port 5433, so both can coexist.)
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: radif-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: radif
+      POSTGRES_PASSWORD: radif_dev
+      POSTGRES_DB: radif
+      TZ: Asia/Tehran
+    ports:
+      - "5435:5432"
+    volumes:
+      - radif-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U radif -d radif"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  radif-pgdata:

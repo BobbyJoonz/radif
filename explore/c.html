@@ -1,0 +1,264 @@
+﻿<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ردیف — میز سیگنال</title>
+<style>
+  @font-face{font-family:Peyda;src:url("../public/fonts/peyda/Peyda-Regular.woff2") format("woff2");font-weight:400;font-display:swap}
+  @font-face{font-family:Peyda;src:url("../public/fonts/peyda/Peyda-Medium.woff2") format("woff2");font-weight:500;font-display:swap}
+  @font-face{font-family:Peyda;src:url("../public/fonts/peyda/Peyda-SemiBold.woff2") format("woff2");font-weight:600;font-display:swap}
+  @font-face{font-family:Peyda;src:url("../public/fonts/peyda/Peyda-Bold.woff2") format("woff2");font-weight:700;font-display:swap}
+  @font-face{font-family:Peyda;src:url("../public/fonts/peyda/Peyda-ExtraBold.woff2") format("woff2");font-weight:800;font-display:swap}
+
+  :root{
+    --background:#000014; --surface:#0B0B3F; --surface-raised:#11115A;
+    --border:#333377; --primary:#FF852E; --foreground:#ECECF6; --muted-foreground:#B5B6DD;
+    --rule:rgba(51,51,119,.55); --rule-soft:rgba(51,51,119,.3);
+    --font-ui:Peyda, "Segoe UI", Tahoma, sans-serif;
+    --font-mono:ui-monospace, "Cascadia Mono", Consolas, "Liberation Mono", monospace;
+    --ease:cubic-bezier(.2,.8,.2,1);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--background);color:var(--foreground);font-family:var(--font-ui);font-size:13px;line-height:1.6;-webkit-font-smoothing:antialiased;font-variant-numeric:tabular-nums}
+
+  .console{min-height:100svh;display:grid;grid-template-rows:48px 1fr}
+  .top{display:flex;align-items:center;gap:12px;padding:0 18px;border-bottom:1px solid var(--rule)}
+  .top .brand{font-weight:900;font-size:16px;letter-spacing:-.01em}
+  .top .brand span{font-family:var(--font-mono);font-size:10px;letter-spacing:.1em;color:var(--muted-foreground);margin-inline-start:6px}
+  .top .div{width:1px;height:16px;background:var(--rule)}
+  .top .who{font-size:12px;color:var(--muted-foreground)}
+  .top .who b{color:var(--foreground);font-weight:500}
+  .top .sp{flex:1}
+  .top .clock{font-family:var(--font-mono);font-size:11px;color:var(--muted-foreground)}
+  .top .clock b{color:var(--foreground);font-weight:400}
+  .top .lang{display:flex;border:1px solid var(--rule);border-radius:5px;overflow:hidden}
+  .top .lang button{font:inherit;font-size:11px;background:transparent;color:var(--muted-foreground);border:0;padding:4px 9px 5px;cursor:pointer;min-height:26px;min-width:26px}
+  .top .lang button[aria-pressed="true"]{background:var(--surface-raised);color:var(--foreground)}
+
+  .body{display:grid;grid-template-columns:196px minmax(0,1fr) 372px}
+
+  /* ---------- signal rail ---------- */
+  .signal{border-inline-end:1px solid var(--rule);padding:16px 14px;display:grid;align-content:start;gap:14px;position:relative;overflow:hidden}
+  .signal h2{margin:0;font-size:11px;letter-spacing:.08em;color:var(--muted-foreground);font-weight:500}
+  canvas{display:block;width:100%;height:140px}
+  .sigstats{display:grid;gap:8px;font-size:11px;color:var(--muted-foreground);position:relative}
+  .sigstats div{display:flex;justify-content:space-between;border-bottom:1px solid var(--rule-soft);padding-bottom:5px}
+  .sigstats b{color:var(--foreground);font-weight:500;font-family:var(--font-mono);font-size:11px}
+  .hours{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:10px;color:var(--muted-foreground);margin-top:-8px;opacity:.75}
+  .queue{display:grid;gap:0;position:relative}
+  .q{display:grid;grid-template-columns:16px minmax(0,1fr);gap:8px;padding:7px 0;border-bottom:1px solid var(--rule-soft);font-size:11px;align-items:baseline}
+  .q .n{font-family:var(--font-mono);font-size:10px;color:var(--muted-foreground)}
+  .q b{display:block;font-size:12px;font-weight:500;line-height:1.4}
+  .q small{display:block;font-size:10px;color:var(--muted-foreground);line-height:1.5}
+  .q[data-now="1"] .n{color:var(--primary)}
+  .q[data-now="1"] b{font-weight:700}
+
+  /* ---------- thread ---------- */
+  .thread{border-inline-end:1px solid var(--rule);display:grid;grid-template-rows:auto 1fr auto;min-width:0}
+  .thead{display:flex;align-items:baseline;gap:10px;padding:14px 20px 10px;border-bottom:1px solid var(--rule-soft)}
+  .thead h1{margin:0;font-size:15px;font-weight:700;letter-spacing:-.01em}
+  .thead .meta{font-family:var(--font-mono);font-size:11px;color:var(--muted-foreground)}
+  .thead .src{margin-inline-start:auto;font-size:10px;color:var(--primary);border:1px solid rgba(255,133,46,.35);border-radius:3px;padding:1px 6px 2px}
+  .msgs{overflow:auto;padding:8px 20px 18px;display:flex;flex-direction:column;justify-content:flex-end}
+  .line{display:grid;grid-template-columns:64px minmax(0,1fr);gap:12px;padding:10px 0;border-bottom:1px solid var(--rule-soft)}
+  .line time{font-family:var(--font-mono);font-size:10px;color:var(--muted-foreground);padding-top:3px}
+  .line .from{font-size:10px;color:var(--muted-foreground);margin-bottom:3px}
+  .line .from b{color:var(--foreground);font-weight:500}
+  .line p{margin:0;font-size:14px;line-height:1.85;max-width:52ch}
+  .line mark{background:rgba(255,133,46,.12);color:var(--foreground);box-shadow:inset 0 -1px 0 rgba(255,133,46,.6);padding:0 2px}
+  .line.out p{color:var(--muted-foreground)}
+  .line.out{background:transparent}
+  .logline{display:flex;gap:10px;align-items:center;padding:6px 0;font-family:var(--font-mono);font-size:10px;color:var(--muted-foreground)}
+  .logline .ok{color:var(--primary)}
+  .logline .bar{flex:1;height:1px;background:var(--rule-soft)}
+  .compose{border-top:1px solid var(--rule);padding:10px 20px;display:flex;gap:10px;align-items:center}
+  .compose .pv{flex:1;border:1px solid var(--rule);border-radius:4px;padding:6px 10px;font-size:11px;color:var(--muted-foreground);background:transparent}
+  .compose button{font:inherit;font-size:11px;background:var(--surface-raised);color:var(--foreground);border:1px solid var(--border);border-radius:4px;padding:5px 10px 6px;cursor:pointer;min-height:28px}
+
+  /* ---------- action sheet ---------- */
+  .sheet{padding:16px 18px;display:grid;align-content:start;gap:12px;background:var(--surface)}
+  .sheet h2{margin:0;font-size:11px;letter-spacing:.06em;color:var(--muted-foreground);font-weight:500}
+  .proposal{border:1px solid var(--rule);border-radius:4px;overflow:hidden}
+  .proposal header{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--surface-raised);border-bottom:1px solid var(--rule)}
+  .proposal header b{font-size:12px;font-weight:600}
+  .proposal header .state{margin-inline-start:auto;font-size:9px;letter-spacing:.04em;border:1px solid var(--rule);border-radius:2px;padding:1px 5px;color:var(--muted-foreground)}
+  .proposal header .state.warn{color:var(--primary);border-color:rgba(255,133,46,.45)}
+  .rows{display:grid}
+  .row{display:grid;grid-template-columns:78px minmax(0,1fr);gap:10px;padding:8px 10px;border-bottom:1px solid var(--rule-soft);align-items:baseline}
+  .row:last-child{border-bottom:0}
+  .row dt{font-size:10px;color:var(--muted-foreground)}
+  .row dd{margin:0;font-size:12px;line-height:1.6}
+  .row dd .id{font-family:var(--font-mono);font-size:11px;direction:ltr;unicode-bidi:isolate;color:var(--foreground)}
+  .row dd .empty{color:var(--muted-foreground);border-bottom:1px dashed var(--rule)}
+  .chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:4px}
+  .chip{font-size:10px;border:1px solid var(--rule);border-radius:999px;padding:1px 7px 2px;color:var(--muted-foreground);white-space:nowrap}
+  .chip.org{color:var(--primary);border-color:rgba(255,133,46,.4)}
+  .commit{display:grid;gap:8px;margin-top:2px}
+  .commit button{font:inherit;font-weight:600;font-size:12px;border-radius:4px;padding:9px 12px;cursor:pointer;border:1px solid transparent;background:var(--primary);color:#1E0C00}
+  .commit button.ghost{background:transparent;color:var(--foreground);border-color:var(--border);font-weight:500}
+  .commit p{margin:0;font-size:10px;color:var(--muted-foreground);line-height:1.6}
+  .foot{margin-top:auto;font-family:var(--font-mono);font-size:9px;color:var(--muted-foreground);display:flex;justify-content:space-between;padding-top:8px;border-top:1px solid var(--rule-soft)}
+
+  @media (max-width:1180px){
+    .body{grid-template-columns:150px minmax(0,1fr) 320px}
+    .signal .queue{display:none}
+  }
+  @media (max-width:900px){
+    .body{grid-template-columns:minmax(0,1fr)}
+    .signal{display:none}
+    .thread{border-inline-end:0}
+    .sheet{border-top:1px solid var(--rule)}
+    .top .who{display:none}
+  }
+  @media (max-width:560px){
+    .top{padding:0 12px;gap:8px}
+    .top .clock{display:none}
+    .thead{padding:10px 14px}
+    .msgs{padding:6px 14px 14px}
+    .line{grid-template-columns:minmax(0,1fr);gap:2px}
+    .line time{order:2;padding-top:6px}
+    .line p{font-size:13px}
+    .sheet{padding:12px 14px}
+  }
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="console">
+  <header class="top">
+    <div class="brand">ردیف<span>RADIF</span></div>
+    <div class="div" aria-hidden="true"></div>
+    <div class="who">آتلیهٔ ترنج · <b>مریم رستمی</b></div>
+    <div class="sp"></div>
+    <div class="clock">Tehran <b>21:30</b> · sync <b>2m</b></div>
+    <div class="lang" role="group" aria-label="زبان"><button aria-pressed="true">فا</button><button aria-pressed="false">EN</button></div>
+  </header>
+
+  <div class="body">
+    <aside class="signal" aria-label="سیگنال پیام‌ها">
+      <h2>سیگنال ۲۴ ساعت</h2>
+      <canvas id="sig" width="360" height="260" aria-label="تراکم پیام‌های امروز به تفکیک ساعت"></canvas>
+      <div class="hours"><span>00</span><span>06</span><span>12</span><span>18</span><span>24</span></div>
+      <div class="sigstats">
+        <div><span>ورودی</span><b>23</b></div>
+        <div><span>پاسخ</span><b>14</b></div>
+        <div><span>بی‌پاسخ</span><b>3</b></div>
+      </div>
+      <div class="queue">
+        <div class="q" data-now="1"><span class="n">02</span><div><b>نگار احمدی</b><small>۲ روز عقب</small></div></div>
+        <div class="q"><span class="n">03</span><div><b>شیرین کیانی</b><small>امروز ۱۶:۰۰</small></div></div>
+        <div class="q"><span class="n">04</span><div><b>حسین مرادی</b><small>امروز ۱۸:۰۰</small></div></div>
+        <div class="q"><span class="n">05</span><div><b>الهام صادقی</b><small>فردا ۱۱:۰۰</small></div></div>
+      </div>
+    </aside>
+
+    <main class="thread">
+      <div class="thead">
+        <h1>نگار احمدی</h1>
+        <span class="meta">DEMO-CONV-114 · DEMO-ORD-1042</span>
+        <span class="src">بازپخش</span>
+      </div>
+      <div class="msgs">
+        <div class="logline"><span class="ok">●</span><span>تحلیل اجرا شد · adhoc-1405-08-06T21:04 · ۲۴۰ms · mock</span><span class="bar"></span></div>
+        <div class="line out">
+          <time>20:41</time>
+          <div><div class="from"><b>شما</b> · فروشنده</div><p>سفارش شما آمادهٔ ارسال است.</p></div>
+        </div>
+        <div class="line">
+          <time>21:04</time>
+          <div><div class="from"><b>نگار احمدی</b> · مشتری</div><p><mark>واریز کردم</mark>، کد رهگیری رو می‌فرستید؟ <mark>آدرسم هم عوض شده</mark>، هنوز نفرستادید؟</p></div>
+        </div>
+        <div class="logline"><span class="ok">●</span><span>۳ درخواست پیشنهاد شد · ۲ فیلد شاهد دارد · ۱ فیلد ناقص</span><span class="bar"></span></div>
+      </div>
+      <div class="compose">
+        <div class="pv">پیش‌نمایش پاسخ: «اعلام پرداخت شما ثبت شد و در حال بررسی است…»</div>
+        <button>پیش‌نمایش</button>
+      </div>
+    </main>
+
+    <aside class="sheet" aria-label="پنل اقدام">
+      <h2>پیشنهادها · اجرا ۲۱:۰۴</h2>
+
+      <section class="proposal">
+        <header><b>نوع درخواست</b><span class="state">۳ مورد</span></header>
+        <div class="rows">
+          <div class="row"><dt>اصلی</dt><dd>اعلام پرداخت<div class="chips"><span class="chip org">ادعای مشتری</span><span class="chip">بدون تأیید</span></div></dd></div>
+          <div class="row"><dt>هم‌زمان</dt><dd>درخواست رهگیری<div class="chips"><span class="chip">کد ثبت نشده</span></div></dd></div>
+          <div class="row"><dt>هم‌زمان</dt><dd>تغییر آدرس<div class="chips"><span class="chip">آدرس تازه نیامده</span></div></dd></div>
+        </div>
+      </section>
+
+      <section class="proposal">
+        <header><b>سفارش مرتبط</b><span class="state">پیشنهاد</span></header>
+        <div class="rows">
+          <div class="row"><dt>سفارش</dt><dd><span class="id">DEMO-ORD-1042</span><div class="chips"><span class="chip">تطبیق: همان گفتگو</span></div></dd></div>
+          <div class="row"><dt>مبلغ</dt><dd>۳۷٬۰۰۰٬۰۰۰ ریال<div class="chips"><span class="chip">واحد مشخص</span></div></dd></div>
+          <div class="row"><dt>پرداخت</dt><dd>اعلام‌شده / بررسی‌نشده<div class="chips"><span class="chip org">تأیید دستی لازم</span></div></dd></div>
+        </div>
+      </section>
+
+      <section class="proposal">
+        <header><b>اطلاعات ناقص</b><span class="state warn">نیاز به تکمیل</span></header>
+        <div class="rows">
+          <div class="row"><dt>آدرس</dt><dd><span class="empty">خالی</span></dd></div>
+          <div class="row"><dt>کد رهگیری</dt><dd><span class="empty">ثبت نشده</span><div class="chips"><span class="chip">وظیفهٔ پیگیری</span></div></dd></div>
+        </div>
+      </section>
+
+      <div class="commit">
+        <button>بازبینی و تأیید پیش‌نویس</button>
+        <button class="ghost">ارجاع به مسئول</button>
+        <p>کپی یا تأیید پاسخ، وضعیت «ارسال شد» نمی‌سازد.</p>
+      </div>
+
+      <div class="foot"><span>v0.1 · demo</span><span>draft · needs_review</span></div>
+    </aside>
+  </div>
+</div>
+
+<script>
+  // Dot field: the day's real message volume, drawn as a matrix so the rail reads
+  // as a signal, not decoration. One column is "now" and breathes.
+  (function(){
+    const c = document.getElementById('sig');
+    const ctx = c.getContext('2d');
+    const dpr = Math.min(devicePixelRatio || 1, 2);
+    const W = c.clientWidth || 168, H = 120;
+    c.width = W * dpr; c.height = H * dpr;
+    ctx.scale(dpr, dpr);
+    const perHour = [1,0,0,1,2,1,0,3,5,9,14,23,19,12,8,11,16,21,17,9,5,3,2,1];
+    const cols = 24, rows = 12, gapX = W / cols, gapY = (H - 14) / rows;
+    const max = Math.max.apply(null, perHour);
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let t = 0;
+    function draw(){
+      ctx.clearRect(0,0,W,H);
+      for (let x = 0; x < cols; x++){
+        const n = Math.max(1, Math.round(perHour[x] / max * rows));
+        const isNow = x === 23;
+        const breathe = isNow && !reduce ? 0.72 + 0.28 * Math.sin(t / 620) : 1;
+        for (let i = 0; i < n; i++){
+          ctx.beginPath();
+          ctx.arc(gapX * (x + .5), H - 8 - i * gapY, 1.9, 0, Math.PI * 2);
+          ctx.fillStyle = isNow ? 'rgba(255,133,46,' + breathe + ')' : (i === n - 1 ? 'rgba(255,133,46,.62)' : 'rgba(51,51,119,.95)');
+          ctx.fill();
+        }
+      }
+      if (!reduce){ t += 16; requestAnimationFrame(draw); }
+    }    draw();
+    addEventListener('resize', () => { if (reduce) draw(); });
+  })();
+  // the log line arrives like a dispatch
+  (function(){
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce) return;
+    document.querySelectorAll('.line').forEach((el,i) => {
+      el.animate([{opacity:0, transform:'translateY(4px)'},{opacity:1, transform:'none'}],
+        {duration:260, delay:120 + i*90, easing:'cubic-bezier(.2,.8,.2,1)', fill:'both'});
+    });
+  })();
+</script>
+</body>
+</html>
+
