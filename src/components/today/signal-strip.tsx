@@ -1,4 +1,4 @@
-import type { Locale } from "@/i18n/config";
+﻿import type { Locale } from "@/i18n/config";
 import { localizeDigits } from "@/i18n/format";
 
 /**
@@ -17,7 +17,7 @@ export function SignalStrip({
   nowHour: number;
   title: string;
 }) {
-  const max = Math.max(1, ...data.map((d) => d.count));
+  const max = Math.max(3, ...data.map((d) => d.count)); // a floor so one message still reads as a small bar, not a full one
   return (
     <div>
       <h2>{title}</h2>
@@ -27,7 +27,7 @@ export function SignalStrip({
             key={hour}
             className="strip-bar"
             data-now={hour === nowHour ? "true" : undefined}
-            style={{ height: `${Math.max(2, Math.round((count / max) * 100))}%` }}
+            style={{ height: `${Math.max(2, Math.round((count / max) * 100))}%`, opacity: count === 0 ? 0.35 : 1 }}
           />
         ))}
       </div>
@@ -41,3 +41,4 @@ export function SignalStrip({
     </div>
   );
 }
+

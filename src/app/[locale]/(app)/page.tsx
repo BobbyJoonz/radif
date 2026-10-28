@@ -25,31 +25,15 @@ function hourIn(timeZone: string, now: Date): number {
 }
 
 function dueCell(row: TodayRow, locale: Locale, now: Date, dict: ReturnType<typeof getDictionary>) {
-  if (!row.dueAt) {
-    return (
-      <>
-        <span>{dict.common.none}</span>
-      </>
-    );
-  }
-  const relative = formatRelative(row.dueAt, now, locale);
-  if (row.dueLabel === "overdue") {
-    return (
-      <>
-        {relative}
-        <small>{dict.today.overdue}</small>
-      </>
-    );
-  }
-  if (row.dueLabel === "today") {
-    return (
-      <>
-        {formatTime(row.dueAt, locale)}
-        <small>{dict.common.today}</small>
-      </>
-    );
-  }
-  return <>{relative}</>;
+  if (!row.dueAt) return <span className="due-tag">{dict.common.none}</span>;
+  const stamp = row.dueLabel === "today" ? formatTime(row.dueAt, locale) : formatRelative(row.dueAt, now, locale);
+  const tag = row.dueLabel === "overdue" ? dict.today.overdue : row.dueLabel === "today" ? dict.common.today : null;
+  return (
+    <>
+      <span className="due-main">{stamp}</span>
+      {tag ? <span className="due-tag"> · {tag}</span> : null}
+    </>
+  );
 }
 
 export default async function TodayPage({ params }: PageProps<"/[locale]">) {

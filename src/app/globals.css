@@ -227,11 +227,11 @@ a { color: inherit; text-decoration: none; }
 .shellhead-spacer { flex: 1; }
 .demochip {
   display: inline-flex; align-items: center; gap: 6px;
-  font-size: var(--t-micro); color: var(--primary);
-  border: 1px solid var(--primary-line); border-radius: var(--r-pill);
+  font-size: var(--t-micro); color: var(--muted-foreground);
+  border: 1px solid var(--border); border-radius: var(--r-pill);
   padding: 2px 10px 3px; white-space: nowrap;
 }
-.demochip-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--primary); }
+.demochip-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--muted-foreground); }
 .account { display: inline-flex; align-items: baseline; gap: 6px; font-size: var(--t-meta); }
 .account-name { font-weight: 600; }
 .account-role { color: var(--muted-foreground); }
@@ -379,7 +379,7 @@ a { color: inherit; text-decoration: none; }
 .col-go { width: 24px; }
 
 .prio { display: inline-block; width: 3px; height: 26px; border-radius: 2px; background: var(--rule); vertical-align: middle; }
-.prio[data-p="P1"] { background: var(--primary); height: 34px; }
+.prio[data-p="P1"] { background: var(--foreground); height: 34px; } /* the tick is rank, not urgency; orange stays for the one action */
 .prio[data-p="P2"] { background: color-mix(in oklab, var(--muted-foreground) 60%, transparent); }
 .prio[data-p="P3"] { background: var(--rule-soft); }
 .cust-name { font-size: var(--t-h3); font-weight: 600; display: inline-block; }
@@ -392,7 +392,7 @@ a { color: inherit; text-decoration: none; }
 .next-sub { display: block; font-size: var(--t-meta); color: var(--muted-foreground); margin-top: 2px; }
 .cell-due { text-align: end; font-size: var(--t-small); white-space: nowrap; }
 .cell-due[data-label="overdue"] { color: var(--primary); font-weight: 600; }
-.cell-due small { display: block; margin-top: 1px; font-size: var(--t-meta); color: var(--muted-foreground); font-weight: 400; }
+.cell-due small { font-size: var(--t-meta); color: var(--muted-foreground); }
 .go-cell { text-align: end; color: var(--muted-foreground); }
 .phase-tag { font-size: 10px; border: 1px solid var(--rule); border-radius: var(--r-pill); padding: 0 6px; color: var(--muted-foreground); }
 
@@ -469,3 +469,12 @@ label[for] {
 }
 input, select, textarea { min-height: 36px; }
 
+
+
+
+/* The due cell is one line: stamp, separator, tag. Two stacked lines collided in
+   a 108px column at 1440 (found in the round-1 critique). */
+.cell-due { line-height: 1.6; }
+.due-main { font-weight: 600; }
+.due-tag { font-size: var(--t-meta); color: var(--muted-foreground); font-weight: 400; white-space: nowrap; }
+.cell-due[data-label="overdue"] .due-main { color: var(--primary); }
