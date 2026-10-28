@@ -277,6 +277,34 @@ alpha, 4s, paused when off-screen and under reduced motion).
 
 ---
 
+## 3b. Brand assets (supplied after the first build)
+
+The client supplied the mark after the direction was set: a ribbon “R” emblem and
+two lockups (lowercase `radif`, uppercase `RADIF`), all with transparent
+grounds, in brand orange **#F87820**.
+
+Decisions, and why:
+
+- **The emblem is the constant; the wordmark is localised.** The supplied
+  wordmark is Latin-only, but this product is Persian-first. In the bar and on
+  the login panel the lockup is therefore *emblem (the supplied PNG) + «ردیف» set
+  in Peyda 800* for Persian, and *emblem + "radif"* for English. The exact
+  supplied lockup files are used where the lockup is the subject: the social
+  card, the store listing, the app icon set.
+- **Two oranges, never in one component.** The mark keeps #F87820 (it is a
+  raster brand file and is never recoloured); the UI accent stays #FF852E (the
+  client's token). They never sit adjacent in the same control, so the pair reads
+  as one warm family rather than a mismatch.
+- **Icons are generated, not drawn.** `scripts/brand-assets.py` trims the
+  transparent margin evenly, pads to a square, and composites on `#000014` for
+  anything that must be opaque (app icon, Apple touch icon 180, maskable 512,
+  favicon 16/32/48). The 512 icon gets a 22% rounded tile and a `#333377`
+  hairline so it does not melt into a dark tab bar.
+- **Where it appears:** header lockup (26px emblem), login panel (52px), favicon
+  and app/apple icons, PWA manifest (incl. maskable), and the social card. It is
+  not used as decoration anywhere else — a logo repeated as ornament is the same
+  mistake as a colour used for six jobs.
+
 ## 4. Content
 
 Written before the layout; every string below is what the app ships, seeded as

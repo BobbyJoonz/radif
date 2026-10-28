@@ -478,3 +478,23 @@ input, select, textarea { min-height: 36px; }
 .due-main { font-weight: 600; }
 .due-tag { font-size: var(--t-meta); color: var(--muted-foreground); font-weight: 400; white-space: nowrap; }
 .cell-due[data-label="overdue"] .due-main { color: var(--primary); }
+
+/* ── brand lockup ────────────────────────────────────────────────────────────
+   The supplied emblem is the constant; the wordmark is localised (Peyda 800):
+   «ردیف» in Persian, "radif" in English. The PNG is served at 2x its box, so it
+   stays crisp on retina and at 150% Windows scaling. */
+.brandmark { display: inline-flex; align-items: center; gap: 8px; }
+.brandmark-emblem { display: block; width: 26px; height: 26px; flex: none; }
+.brandmark-word { font-size: 19px; font-weight: 800; letter-spacing: -0.015em; line-height: 1; }
+.brandmark-lg { gap: 12px; }
+.brandmark-lg .brandmark-emblem { width: 52px; height: 52px; }
+.brandmark-lg .brandmark-word { font-size: 38px; letter-spacing: -0.025em; }
+@media (max-width: 900px) {
+  .brandmark-emblem { width: 24px; height: 24px; }
+  .brandmark-word { font-size: 18px; }
+}
+
+/* Peyda's word space is about 0.12em — correct for Persian, visibly tight for
+   Latin ("Today'swork"). Restore a normal Latin word space on the English
+   document only; Persian keeps the narrow space its script expects. */
+html[lang="en"] { word-spacing: 0.09em; }

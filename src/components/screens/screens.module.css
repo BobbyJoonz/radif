@@ -1447,3 +1447,8 @@
 
 /* WCAG 2.5.8 — compact links in dense rows keep a 24px target. */
 .rowLink, .handle { display: inline-flex; align-items: center; min-height: 24px; }
+
+/* the brand lockup is taller than the old text mark; keep the language switch
+   pinned to the panel's inline-end corner instead of dropping under it */
+.loginkTop { align-items: flex-start; }
+.loginkTop .loginBrand { margin-inline-end: auto; }

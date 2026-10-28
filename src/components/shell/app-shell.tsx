@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import type { Dictionary } from "@/i18n";
 import type { Locale } from "@/i18n/config";
+import { BrandMark } from "@/components/brand/brand-mark";
 import { MobileNav, TopNav, type NavItem } from "./nav";
 
 export type ShellSession = {
@@ -49,11 +50,8 @@ export function AppShell({
 
       <header className="shellhead">
         <div className="shellhead-top">
-          <Link href={`/${locale}`} className="brand" aria-label={dict.brand.name}>
-            <span className="brand-name">{dict.brand.name}</span>
-            <span className="brand-latin" aria-hidden="true">
-              {dict.brand.latin}
-            </span>
+          <Link href={`/${locale}`} className="brand" aria-label={`${dict.brand.name} — ${dict.brand.tagline}`}>
+            <BrandMark locale={locale} priority />
           </Link>
           <span className="brand-divider" aria-hidden="true" />
           <span className="shopname">{session.shopName}</span>

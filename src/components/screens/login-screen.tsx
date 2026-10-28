@@ -18,6 +18,7 @@ import {
   SkeletonTitle,
   type DesignedState,
 } from "@/components/ui";
+import { BrandMark } from "@/components/brand/brand-mark";
 import styles from "./screens.module.css";
 
 const DEMO_PASSWORD = "radif-demo-1405";
@@ -97,9 +98,8 @@ export function LoginScreen({
         <div className={styles.loginWrap}>
           <div className={styles.loginPanel}>
             <div className={styles.loginkTop}>
-              <Link href={`/${locale}`} className={styles.loginBrand}>
-                <span className={styles.loginWord}>{dict.brand.name}</span>
-                <span className={styles.loginLatin}>{dict.brand.latin}</span>
+              <Link href={`/${locale}`} className={styles.loginBrand} aria-label={dict.brand.name}>
+                <BrandMark locale={locale} size="lg" priority />
               </Link>
               <Link href={`/${otherLocale(locale)}/login`} className={styles.langSwitchInline}>
                 {otherLocale(locale) === "en" ? "EN" : "فا"}

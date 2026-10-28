@@ -180,6 +180,21 @@ explore/, shots/   design process evidence
 scripts/           pg-local.ps1 (portable PostgreSQL), design shots
 ```
 
+## Brand
+
+The ribbon emblem and wordmarks in `brand/source/` are supplied brand files —
+never recoloured or redrawn. All icons and UI lockups are generated:
+
+```bash
+python scripts/brand-assets.py     # icons, favicons, PWA tiles, UI lockups
+```
+
+The header shows the emblem plus a **localised** wordmark («ردیف» in Peyda 800
+for Persian, "radif" for English) because the supplied wordmark is Latin-only;
+the supplied lockup files are used as-is on the login panel, the social card and
+the app icon. Brand orange is #F87820, the UI accent token is #FF852E — see
+`DIRECTION.md` §3b.
+
 ## Licence
 
 Source: private project. Demo data is synthetic; `DEMO-*` identifiers exist so it

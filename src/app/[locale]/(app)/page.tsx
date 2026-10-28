@@ -167,7 +167,8 @@ export default async function TodayPage({ params }: PageProps<"/[locale]">) {
                             )}
                             {row.itemCount != null ? (
                               <span>
-                                {formatNumber(row.itemCount, locale)} {locale === "fa" ? "قلم" : "items"}
+                                {formatNumber(row.itemCount, locale)}{" "}
+                                {locale === "fa" ? "قلم" : row.itemCount === 1 ? "item" : "items"}
                               </span>
                             ) : null}
                             <span>{dict.source[row.source]}</span>
@@ -222,7 +223,9 @@ export default async function TodayPage({ params }: PageProps<"/[locale]">) {
               <b className="nums">
                 {data.stats.avgReplyMinutes === null
                   ? dict.common.unknown
-                  : `${formatNumber(data.stats.avgReplyMinutes, locale)} ${localizeDigits("min", locale)}`}
+                  : locale === "fa"
+                      ? `${formatNumber(data.stats.avgReplyMinutes, locale)} دقیقه`
+                      : `${formatNumber(data.stats.avgReplyMinutes, locale)} min`}
               </b>
             </div>
           </div>
