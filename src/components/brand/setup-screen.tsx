@@ -39,6 +39,11 @@ export function SetupScreen({ missing, reason = "env" }: { missing: string[]; re
         و <code className="mono ltr">.env.example</code> در مخزن.
       </p>
       <div className="brandscreen-actions">
+        {reason === "database" ? (
+          <a className="ghost-btn" href="/api/setup">
+            ساخت جدول‌ها و دادهٔ نمایشی / provision now
+          </a>
+        ) : null}
         <Link className="ghost-btn" href="/api/health?deep=1" prefetch={false}>
           گزارش تشخیص / diagnostics
         </Link>

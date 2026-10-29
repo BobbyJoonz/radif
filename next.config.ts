@@ -10,6 +10,10 @@ const nextConfig: NextConfig = {
   experimental: { globalNotFound: true },
   partialPrefetching: false,
   // Prisma and its driver must stay out of the bundler's module graph.
+  // /api/setup applies the migration SQL at runtime; Vercel must ship the file.
+  outputFileTracingIncludes: {
+    "/api/setup": ["./prisma/migrations/**"],
+  },
   serverExternalPackages: ["@prisma/client", "@prisma/adapter-pg", "pg"],
   images: {
     // The product's largest raster is a 1200px brand lockup; generating 2048 and
