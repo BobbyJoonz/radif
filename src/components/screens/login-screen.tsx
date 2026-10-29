@@ -82,7 +82,7 @@ export function LoginScreen({
       return;
     }
     setBusy(false);
-    router.push(nextPath ?? `/${locale}`);
+    router.push(nextPath ?? `/${locale}/today`);
     router.refresh();
   }
 

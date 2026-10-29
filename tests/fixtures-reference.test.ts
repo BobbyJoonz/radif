@@ -22,7 +22,7 @@ describe("demo fixtures carry a human reference reading (brief §16)", () => {
     // Three second-shop texts are handled by the rule-based classifier rather
     // than a fixture, so the contract is "this is a demo text", not "this is a
     // fixture": a label may never describe a sentence the product never sees.
-    const demoTexts = new Set(Object.values(DEMO_TEXTS));
+    const demoTexts = new Set<string>(Object.values(DEMO_TEXTS));
     const orphaned = Object.keys(FIXTURE_LABELS).filter((text) => !demoTexts.has(text));
     expect(orphaned).toEqual([]);
   });

@@ -32,7 +32,7 @@ export function AppShell({
   children: ReactNode;
 }) {
   const items: NavItem[] = [
-    { key: "today", href: "", label: dict.nav.today, count: counts.overdue },
+    { key: "today", href: "today", label: dict.nav.today, count: counts.overdue },
     { key: "inbox", href: "inbox", label: dict.nav.inbox },
     { key: "orders", href: "orders", label: dict.nav.orders },
     { key: "tasks", href: "tasks", label: dict.nav.tasks },
