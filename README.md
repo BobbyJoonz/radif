@@ -1,5 +1,7 @@
 # ردیف · Radif
 
+![ردیف — Radif](docs/brand.png)
+
 **میز سفارش فروشگاه‌های اینستاگرامی** — the order desk for Instagram sellers.
 Persian-first (RTL), bilingual FA/EN, real PostgreSQL, no API key needed to run.
 

@@ -175,3 +175,23 @@ state. These are the next four hours of work, not unknowns.
 («۲ روز پیش», «۱۴:۳۰») renders with glyphs colliding at 1440 — the text is correct
 in the DOM and the column is 132px wide, so it is a painting problem in that cell,
 not a content problem. It needs a look in DevTools with the font inspector.
+
+### Round 2b — the brand, applied where it belongs
+
+The supplied files are now used **as supplied**: lowercase `radif` lockup in the
+bar (26px), uppercase `RADIF` on the login panel (44px), the emblem alone for the
+loading screen, the error boundary and the 404. Icons, PWA tiles, the social card
+and the README hero all derive from the same sources via
+`scripts/brand-assets.py`; nothing is redrawn or recoloured.
+
+Two product-level fixes came out of this pass:
+
+- **Unmatched URLs rendered Next's white 404 inside a dark product.** Fixed with
+  `app/global-not-found.tsx` + `experimental.globalNotFound`, so a mistyped
+  address now lands on the branded screen with links back to both locales
+  (verified: `/fa/this-does-not-exist` → 404 + emblem + Persian copy).
+- **Disabled buttons turned muddy brown** (an orange button at 50% opacity).
+  Disabled now reads as a real state: surface fill, hairline, muted ink.
+
+The Persian due stamp was also raised to 14px/600 — at 13px its digits sat too
+close on a dark ground to read at a glance.

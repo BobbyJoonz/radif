@@ -2,40 +2,60 @@ import Image from "next/image";
 import type { Locale } from "@/i18n/config";
 
 /**
- * The brand lockup, built from the supplied emblem.
+ * The supplied brand lockup, used as supplied.
  *
- * Design decision (DIRECTION.md §3): the client's wordmark is Latin-only, while
- * this product is Persian-first. The emblem is the constant; the wordmark is
- * localised — «ردیف» in Peyda 800 for Persian, "radif" in Peyda 800 for English —
- * so the lockup is the same construction in both languages instead of a Latin
- * logo dropped into a Persian header. The exact supplied wordmark files are used
- * where the lockup is the subject (login, social card, store listing).
+ * The client shipped one emblem and two wordmarks (lowercase `radif`, uppercase
+ * `RADIF`), all transparent. This component only picks the file and the size —
+ * it never redraws, recolours or re-letters the mark:
+ *
+ *   • header  — lowercase lockup at 26px, the friendlier of the two
+ *   • login   — uppercase lockup at 44px, the formal one
+ *   • emblem  — favicon, app icons, PWA, loading and error screens
+ *
+ * `alt` is empty because the lockup always sits inside a link or heading that
+ * already names the product; a second accessible name would just repeat it.
  */
 export function BrandMark({
-  locale,
   size = "sm",
+  variant = "lower",
   priority = false,
 }: {
-  locale: Locale;
+  locale?: Locale;
   size?: "sm" | "lg";
+  variant?: "lower" | "caps";
   priority?: boolean;
 }) {
-  const word = locale === "fa" ? "ردیف" : "radif";
-  const px = size === "lg" ? 52 : 26;
+  const height = size === "lg" ? 44 : 26;
+  // trimmed aspect ratios of the supplied files, measured by scripts/brand-assets.py
+  const ratio = variant === "caps" ? 1968 / 598 : 1828 / 791;
+  const src = variant === "caps" ? "/brand/radif-lockup-caps.png" : "/brand/radif-lockup.png";
+
   return (
     <span className={`brandmark brandmark-${size}`}>
       <Image
-        src="/brand/radif-emblem.png"
+        src={src}
         alt=""
-        width={px}
-        height={px}
+        width={Math.round(height * ratio)}
+        height={height}
         priority={priority}
-        className="brandmark-emblem"
-        sizes={`${px}px`}
+        className="brandmark-lockup"
+        sizes={`${Math.round(height * ratio)}px`}
       />
-      <span className="brandmark-word" lang={locale}>
-        {word}
-      </span>
     </span>
+  );
+}
+
+/** The emblem alone, for screens where the wordmark would be too much. */
+export function BrandEmblem({ size = 40, className = "" }: { size?: number; className?: string }) {
+  return (
+    <Image
+      src="/brand/radif-emblem.png"
+      alt=""
+      width={size}
+      height={size}
+      aria-hidden="true"
+      className={`brandemblem ${className}`.trim()}
+      sizes={`${size}px`}
+    />
   );
 }

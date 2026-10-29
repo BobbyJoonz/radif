@@ -99,7 +99,7 @@ export function LoginScreen({
           <div className={styles.loginPanel}>
             <div className={styles.loginkTop}>
               <Link href={`/${locale}`} className={styles.loginBrand} aria-label={dict.brand.name}>
-                <BrandMark locale={locale} size="lg" priority />
+                <BrandMark locale={locale} size="lg" variant="caps" priority />
               </Link>
               <Link href={`/${otherLocale(locale)}/login`} className={styles.langSwitchInline}>
                 {otherLocale(locale) === "en" ? "EN" : "فا"}

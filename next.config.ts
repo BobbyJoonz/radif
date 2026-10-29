@@ -6,6 +6,8 @@ const nextConfig: NextConfig = {
   // rendering, not a cached shell. Turning it off also keeps Suspense
   // boundaries out of the critical path of the queue screen.
   cacheComponents: false,
+  // unmatched URLs must land on the branded dark 404, not Next's white one
+  experimental: { globalNotFound: true },
   partialPrefetching: false,
   // Prisma and its driver must stay out of the bundler's module graph.
   serverExternalPackages: ["@prisma/client", "@prisma/adapter-pg", "pg"],

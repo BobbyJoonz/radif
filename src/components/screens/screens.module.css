@@ -1452,3 +1452,12 @@
    pinned to the panel's inline-end corner instead of dropping under it */
 .loginkTop { align-items: flex-start; }
 .loginkTop .loginBrand { margin-inline-end: auto; }
+
+/* the lockup sits at the inline-start of the top row; the language switch goes
+   to the far end of the same row instead of dropping beneath it */
+.loginkTop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between; /* lockup ⟷ language */
+  gap: var(--s3);
+}
