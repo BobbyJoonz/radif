@@ -69,7 +69,7 @@ export type InboxScreenProps = {
 
 type Segment = { text: string; ids: string[] };
 
-export function InboxScreen({ locale, rows, detail, filter, q, role, state, nowISO }: InboxScreenProps) {
+export function InboxScreen({ locale, rows, detail, filter, q, state, nowISO }: InboxScreenProps) {
   const dict = getDictionary(locale);
   const now = useMemo(() => new Date(nowISO), [nowISO]);
   const router = useRouter();

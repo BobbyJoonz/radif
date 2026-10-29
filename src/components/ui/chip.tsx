@@ -27,7 +27,6 @@ export function Chip({
 }
 
 export function SourceChip({
-  source,
   label,
   icon,
 }: {
