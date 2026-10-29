@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
+import { SetupScreen } from "@/components/brand/setup-screen";
 import { LoginScreen } from "@/components/screens/login-screen";
 import { readDesignedState } from "@/components/ui";
 import { getDictionary } from "@/i18n";
 import { isLocale, withLocale, type Locale } from "@/i18n/config";
-import { isDemo } from "@/lib/env";
+import { isDemo, missingRequiredEnv } from "@/lib/env";
 import { getSessionContext } from "@/server/session";
 
 export const dynamic = "force-dynamic";
@@ -25,6 +26,9 @@ export default async function LoginPage({
   const { locale: raw } = await params;
   const locale: Locale = isLocale(raw) ? raw : "fa";
   const sp = await searchParams;
+
+  const missing = missingRequiredEnv();
+  if (missing.length > 0) return <SetupScreen missing={missing} />;
 
   // Already signed in? Go to the queue rather than showing a login form.
   const session = await getSessionContext();

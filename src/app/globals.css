@@ -521,3 +521,18 @@ button[aria-disabled="true"] {
 /* the due stamp is a fact the seller reads at a glance, not metadata */
 .cell-due .due-main { font-size: 14px; font-weight: 600; letter-spacing: 0; }
 .cell-due .due-tag { font-size: var(--t-meta); }
+
+/* setup screen: the exact variable names a deployment still needs */
+.setup-missing {
+  list-style: none;
+  margin: var(--s2) 0;
+  padding: var(--s3) var(--s4);
+  border: 1px solid var(--primary-line);
+  background: var(--primary-soft);
+  border-radius: var(--r-2);
+  display: grid;
+  gap: var(--s2);
+  justify-items: center;
+  font-size: var(--t-small);
+}
+.setup-missing code { color: var(--primary); font-size: var(--t-small); }

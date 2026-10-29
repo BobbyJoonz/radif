@@ -1,22 +1,59 @@
 import { prisma } from "@/server/db";
-import { isDemo } from "@/lib/env";
+import { isDemo, missingRequiredEnv } from "@/lib/env";
 import { handler, ok } from "@/server/http";
+import { getSessionContext } from "@/server/session";
 
 /**
  * GET /api/health — the only unauthenticated route (CONTRACTS §5).
  *
- * It answers the question the shell and the demo script actually ask: "is the
- * database reachable, and is this a demo install?" It reveals nothing else — no
- * tenant, no counts, no host.
+ * Answers the question a deployment actually needs answered: "is the database
+ * reachable, are the required secrets present, and can a session be resolved?"
+ * It never returns a secret value — only booleans and a truncated error message,
+ * which is what makes a broken deploy diagnosable instead of a bare 500.
+ *
+ *   /api/health          shallow: db + mode
+ *   /api/health?deep=1   also: which required env vars are missing, and the
+ *                        first failure from the session layer
  */
 export const dynamic = "force-dynamic";
 
-export const GET = handler(async () => {
+export const GET = handler(async (request: Request) => {
+  const deep = new URL(request.url).searchParams.get("deep") === "1";
+
+  let db: "up" | "down" = "down";
   try {
     await prisma.$queryRaw`SELECT 1`;
-    return ok({ db: "up" as const, demo: isDemo });
+    db = "up";
   } catch {
-    // The process is up but its database is not: honest answer, unhealthy status.
-    return ok({ db: "down" as const, demo: isDemo }, { status: 503 });
+    db = "down";
   }
+
+  const missing = missingRequiredEnv();
+  const base = { db, demo: isDemo(), missingEnv: missing };
+
+  if (!deep) {
+    return ok(base, { status: db === "up" ? 200 : 503 });
+  }
+
+  const envPresence = {
+    DATABASE_URL: Boolean(process.env.DATABASE_URL),
+    BETTER_AUTH_SECRET: Boolean(process.env.BETTER_AUTH_SECRET),
+    BETTER_AUTH_URL: process.env.BETTER_AUTH_URL ?? null,
+    CHANNEL_TOKEN_ENC_KEY: Boolean(process.env.CHANNEL_TOKEN_ENC_KEY),
+    APP_MODE: process.env.APP_MODE ?? null,
+    NODE_ENV: process.env.NODE_ENV ?? null,
+    VERCEL: Boolean(process.env.VERCEL),
+  };
+
+  let session: "ok" | "none" | "error" = "none";
+  let sessionError: string | null = null;
+  try {
+    const ctx = await getSessionContext();
+    session = ctx ? "ok" : "none";
+  } catch (error) {
+    session = "error";
+    sessionError = (error instanceof Error ? error.message : String(error)).slice(0, 240);
+  }
+
+  return ok({ ...base, envPresence, session, sessionError }, { status: db === "up" ? 200 : 503 });
 });

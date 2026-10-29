@@ -76,5 +76,19 @@ export const env: Env = new Proxy({} as Env, {
 
 /** Demo mode is the only mode that seeds or replays data. Production refuses. */
 export function isDemo(): boolean {
-  return getEnv().APP_MODE === "demo";
+  return (process.env.APP_MODE ?? "demo") === "demo";
+}
+
+/**
+ * The variables a *serving* process cannot work without, by name only. Pages call
+ * this before touching auth or the database so a half-configured deployment shows
+ * a setup screen with the exact missing names instead of a 500.
+ */
+export function missingRequiredEnv(): string[] {
+  const missing: string[] = [];
+  if (!process.env.DATABASE_URL) missing.push("DATABASE_URL");
+  if (!process.env.BETTER_AUTH_SECRET || (process.env.BETTER_AUTH_SECRET ?? "").length < 16) {
+    missing.push("BETTER_AUTH_SECRET");
+  }
+  return missing;
 }

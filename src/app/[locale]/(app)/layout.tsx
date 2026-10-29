@@ -1,9 +1,11 @@
 import { redirect } from "next/navigation";
 import type { ReactNode } from "react";
 import "../../globals.css";
+import { SetupScreen } from "@/components/brand/setup-screen";
 import { AppShell } from "@/components/shell/app-shell";
 import { getDictionary } from "@/i18n";
 import { isLocale, withLocale, type Locale } from "@/i18n/config";
+import { missingRequiredEnv } from "@/lib/env";
 import { getSessionContext } from "@/server/session";
 import { getLastSync, getShellCounts } from "@/server/services/shell";
 
@@ -15,6 +17,9 @@ import { getLastSync, getShellCounts } from "@/server/services/shell";
 export default async function AppLayout({ children, params }: LayoutProps<"/[locale]">) {
   const { locale: raw } = await params;
   const locale: Locale = isLocale(raw) ? raw : "fa";
+
+  const missing = missingRequiredEnv();
+  if (missing.length > 0) return <SetupScreen missing={missing} />;
 
   const session = await getSessionContext();
   if (!session) redirect(withLocale(locale, "/login"));
