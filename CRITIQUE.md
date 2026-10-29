@@ -195,3 +195,28 @@ Two product-level fixes came out of this pass:
 
 The Persian due stamp was also raised to 14px/600 — at 13px its digits sat too
 close on a dark ground to read at a glance.
+
+## Round 3 — closing the last two
+
+**Correction to round 2b.** The "glyphs collide in the Persian due cell" note was
+wrong, and I should say so plainly rather than leave a false defect on the record:
+inspecting the live DOM showed `<span class="due-main">پریروز</span>` in a 35×21
+box inside a 132px cell — the string is the idiomatic Persian «پریروز» (day before
+yesterday), short and unclipped. What looked like overlapping glyphs was a
+misread of a downscaled 1440 screenshot. The cell was fine; the reading was not.
+
+**Settings clock: fixed.** The two workday fields were `<input type="time">`,
+which renders in the *browser's* clock style — so a Tehran seller saw "09:00 PM"
+on a Persian screen. They are now deterministic 24-hour text fields
+(`inputMode="numeric"`, `pattern="^([01][0-9]|2[0-3]):[0-5][0-9]$"`,
+placeholder `09:00`), verified at 1440 and 390: **09:00 / 21:00**.
+
+**Still open, by choice:** the Inbox action sheet repeats «نیت پیام» on three
+rows (it should be one row with three chips), and the Settings document does not
+share a column edge between label / value / save at 1440. Both are structure
+work, not defects that break a flow, and both are listed here so the next pass
+starts from evidence rather than memory.
+
+**Verification after these changes:** `tsc --noEmit` exit 0 (no output),
+`pnpm test` 9 files / 70 tests pass, `pnpm build` compiles, Settings and Today
+scanned at 1440/390 with no FAIL.

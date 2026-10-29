@@ -182,7 +182,13 @@ export function SettingsScreen({
               <Field label={dict.settings.workdayStart} htmlFor="wd-start" hint={dict.settings.workdayNote}>
                 <Input
                   id="wd-start"
-                  type="time"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  spellCheck={false}
+                  placeholder="09:00"
+                  pattern="^([01][0-9]|2[0-3]):[0-5][0-9]$"
+                  title={locale === "fa" ? "ساعت ۲۴ساعته، مثل ۰۹:۰۰ یا ۲۱:۰۰" : "24-hour clock, e.g. 09:00 or 21:00"}
                   dir="ltr"
                   
                   readOnly={!canEdit}
@@ -193,7 +199,13 @@ export function SettingsScreen({
               <Field label={dict.settings.workdayEnd} htmlFor="wd-end">
                 <Input
                   id="wd-end"
-                  type="time"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  spellCheck={false}
+                  placeholder="09:00"
+                  pattern="^([01][0-9]|2[0-3]):[0-5][0-9]$"
+                  title={locale === "fa" ? "ساعت ۲۴ساعته، مثل ۰۹:۰۰ یا ۲۱:۰۰" : "24-hour clock, e.g. 09:00 or 21:00"}
                   dir="ltr"
                   readOnly={!canEdit}
                   value={minutesToTime(form.endMin)}
