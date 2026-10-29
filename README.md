@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="brand/source/radif-lockup-source.png" alt="Radif — ردیف" height="76">
+</p>
+
 # ردیف · Radif
 
 ![ردیف — Radif](docs/brand.png)
