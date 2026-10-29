@@ -31,7 +31,13 @@ export default async function LoginPage({
   if (missing.length > 0) return <SetupScreen missing={missing} />;
 
   // Already signed in? Go to the queue rather than showing a login form.
-  const session = await getSessionContext();
+  let session = null;
+  try {
+    session = await getSessionContext();
+  } catch (error) {
+    console.error("[login] session lookup failed", error);
+    return <SetupScreen missing={[]} reason="database" />;
+  }
   if (session) redirect(withLocale(locale, "/"));
 
   const next = typeof sp.next === "string" ? sp.next : null;

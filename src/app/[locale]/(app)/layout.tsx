@@ -21,7 +21,13 @@ export default async function AppLayout({ children, params }: LayoutProps<"/[loc
   const missing = missingRequiredEnv();
   if (missing.length > 0) return <SetupScreen missing={missing} />;
 
-  const session = await getSessionContext();
+  let session = null;
+  try {
+    session = await getSessionContext();
+  } catch (error) {
+    console.error("[layout] session lookup failed", error);
+    return <SetupScreen missing={[]} reason="database" />;
+  }
   if (!session) redirect(withLocale(locale, "/login"));
 
   const dict = getDictionary(locale);

@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { z } from "zod";
 
 /**
@@ -10,7 +11,8 @@ import { z } from "zod";
  */
 const EnvSchema = z.object({
   DATABASE_URL: z.string().min(1, "DATABASE_URL is required"),
-  BETTER_AUTH_SECRET: z.string().min(16, "BETTER_AUTH_SECRET must be at least 16 chars"),
+  // Optional in the schema: authSecret() decides, and in demo mode it derives one.
+  BETTER_AUTH_SECRET: z.string().min(16).optional(),
   BETTER_AUTH_URL: z.string().default("http://localhost:3000"),
   CHANNEL_TOKEN_ENC_KEY: z.string().optional(),
 
@@ -80,6 +82,34 @@ export function isDemo(): boolean {
 }
 
 /**
+ * The secret Better Auth signs cookies with.
+ *
+ * Order of preference:
+ *   1. `BETTER_AUTH_SECRET` (what production must use);
+ *   2. in **demo mode only**, a deterministic secret derived from DATABASE_URL —
+ *      stable across serverless instances, so sign-in works on a deploy that has
+ *      a database but no secret yet. It is not a random key, so it is *not* a
+ *      production choice: `APP_MODE=production` refuses it outright.
+ */
+export function authSecret(): string {
+  const explicit = process.env.BETTER_AUTH_SECRET;
+  if (explicit && explicit.length >= 16) return explicit;
+  const databaseUrl = process.env.DATABASE_URL;
+  if (isDemo() && databaseUrl) {
+    return createHash("sha256").update(`radif-demo-secret|${databaseUrl}`).digest("hex");
+  }
+  throw new Error("BETTER_AUTH_SECRET is required (set it in the deployment environment).");
+}
+
+/** Where the signing secret came from — reported by /api/health, never the value. */
+export function authSecretSource(): "explicit" | "derived-demo" | "missing" {
+  const explicit = process.env.BETTER_AUTH_SECRET;
+  if (explicit && explicit.length >= 16) return "explicit";
+  if (isDemo() && process.env.DATABASE_URL) return "derived-demo";
+  return "missing";
+}
+
+/**
  * The variables a *serving* process cannot work without, by name only. Pages call
  * this before touching auth or the database so a half-configured deployment shows
  * a setup screen with the exact missing names instead of a 500.
@@ -87,8 +117,7 @@ export function isDemo(): boolean {
 export function missingRequiredEnv(): string[] {
   const missing: string[] = [];
   if (!process.env.DATABASE_URL) missing.push("DATABASE_URL");
-  if (!process.env.BETTER_AUTH_SECRET || (process.env.BETTER_AUTH_SECRET ?? "").length < 16) {
-    missing.push("BETTER_AUTH_SECRET");
-  }
+  // In demo mode the signing secret is derived, so only production needs it set.
+  if (authSecretSource() === "missing") missing.push("BETTER_AUTH_SECRET");
   return missing;
 }

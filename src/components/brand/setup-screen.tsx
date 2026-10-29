@@ -9,11 +9,20 @@ import { BrandEmblem } from "./brand-mark";
  * keeps the brand. This is the difference between "the site is broken" and
  * "the site needs one environment variable".
  */
-export function SetupScreen({ missing }: { missing: string[] }) {
+export function SetupScreen({ missing, reason = "env" }: { missing: string[]; reason?: "env" | "database" }) {
   return (
     <div className="brandscreen" role="alert">
       <BrandEmblem size={56} />
-      <h1 className="brandscreen-title">این نسخه هنوز پیکربندی نشده</h1>
+      <h1 className="brandscreen-title">
+        {reason === "database" ? "دیتابیس آماده نیست" : "این نسخه هنوز پیکربندی نشده"}
+      </h1>
+      {reason === "database" ? (
+        <p className="brandscreen-body">
+          اتصال به دیتابیس برقرار است ولی جدول‌ها ساخته نشده‌اند. یک‌بار روی همان دیتابیس
+          <code className="mono ltr"> npx prisma migrate deploy </code>
+          و سپس <code className="mono ltr">npx prisma db seed</code> را اجرا کنید.
+        </p>
+      ) : null}
       <p className="brandscreen-body" lang="en" dir="ltr">
         This deployment is missing required environment variables. Set them in your
         hosting project (Vercel → Settings → Environment Variables), then redeploy.

@@ -3,6 +3,7 @@ import "../globals.css";
 import { directionOf, isLocale, locales, type Locale } from "@/i18n/config";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.BETTER_AUTH_URL ?? "http://localhost:3000"),
   applicationName: "Radif",
   title: { default: "ردیف — میز سفارش فروشگاه", template: "%s · ردیف" },
   description:

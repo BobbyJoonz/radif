@@ -1,5 +1,5 @@
 import { prisma } from "@/server/db";
-import { isDemo, missingRequiredEnv } from "@/lib/env";
+import { authSecretSource, isDemo, missingRequiredEnv } from "@/lib/env";
 import { handler, ok } from "@/server/http";
 import { getSessionContext } from "@/server/session";
 
@@ -21,9 +21,18 @@ export const GET = handler(async (request: Request) => {
   const deep = new URL(request.url).searchParams.get("deep") === "1";
 
   let db: "up" | "down" = "down";
+  let schema: "ok" | "missing" | "unknown" = "unknown";
   try {
     await prisma.$queryRaw`SELECT 1`;
     db = "up";
+    // Is the migration applied? An empty database is a different failure from an
+    // unreachable one, and the setup screen must say which.
+    try {
+      await prisma.$queryRaw`SELECT 1 FROM "User" LIMIT 1`;
+      schema = "ok";
+    } catch {
+      schema = "missing";
+    }
   } catch {
     db = "down";
   }
@@ -35,7 +44,7 @@ export const GET = handler(async (request: Request) => {
     env: process.env.VERCEL_ENV ?? null,
     region: process.env.VERCEL_REGION ?? null,
   };
-  const base = { db, demo: isDemo(), missingEnv: missing, build };
+  const base = { db, schema, demo: isDemo(), missingEnv: missing, authSecret: authSecretSource(), build };
 
   if (!deep) {
     return ok(base, { status: db === "up" ? 200 : 503 });

@@ -81,7 +81,14 @@ const NEXT_ACTION: Record<string, string> = {
   refund_review: "بررسی بازگشت وجه",
 };
 
-export async function getToday(ctx: SessionContext): Promise<TodayDTO> {
+export type TodayFilter = {
+  /** "me" | "unassigned" | a member id. */
+  assignee?: "me" | "unassigned" | string;
+  /** Rolling windows, not calendar days — the shop works past midnight. */
+  due?: "overdue" | "next24h" | "next7d";
+};
+
+export async function getToday(ctx: SessionContext, filter: TodayFilter = {}): Promise<TodayDTO> {
   const now = new Date();
   const timeZone = ctx.tenant.timezone;
   const tenantId = ctx.tenant.id;
@@ -101,7 +108,7 @@ export async function getToday(ctx: SessionContext): Promise<TodayDTO> {
     // counter is distinct *messages*, not suggestion rows.
     countMessagesNeedingReview(tenantId),
     prisma.task.findMany({
-      where: { tenantId, status: { in: [...LEDGER_STATUSES] } },
+      where: { ...ledgerWhere(ctx, filter, now) },
       orderBy: [{ dueAt: { sort: "asc", nulls: "last" } }, { createdAt: "asc" }],
       take: MAX_ROWS,
       include: TODAY_INCLUDE,
@@ -129,6 +136,30 @@ export async function getToday(ctx: SessionContext): Promise<TodayDTO> {
     lastUpdatedAt,
     paused: ctx.settings.postingPaused,
   };
+}
+
+/**
+ * The ledger query, narrowed by the seller's filters. The three counters stay
+ * global on purpose: they answer "how bad is today", which a filter must not
+ * change. Only the rows below them are filtered.
+ */
+function ledgerWhere(ctx: SessionContext, filter: TodayFilter, now: Date) {
+  const where: {
+    tenantId: string;
+    status: { in: ("open" | "in_progress" | "waiting_customer")[] };
+    assigneeId?: string | null;
+    dueAt?: { lt?: Date; gte?: Date; lte?: Date };
+  } = { tenantId: ctx.tenant.id, status: { in: [...LEDGER_STATUSES] } };
+
+  if (filter.assignee === "me") where.assigneeId = ctx.user.id;
+  else if (filter.assignee === "unassigned") where.assigneeId = null;
+  else if (filter.assignee) where.assigneeId = filter.assignee;
+
+  if (filter.due === "overdue") where.dueAt = { lt: now };
+  else if (filter.due === "next24h") where.dueAt = { gte: now, lte: new Date(now.getTime() + 24 * HOUR_MS) };
+  else if (filter.due === "next7d") where.dueAt = { gte: now, lte: new Date(now.getTime() + 7 * 24 * HOUR_MS) };
+
+  return where;
 }
 
 /** The last 24 clock hours of the tenant's day, as one window. */

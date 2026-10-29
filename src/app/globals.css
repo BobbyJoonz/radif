@@ -536,3 +536,38 @@ button[aria-disabled="true"] {
   font-size: var(--t-small);
 }
 .setup-missing code { color: var(--primary); font-size: var(--t-small); }
+
+/* Filters sit in a hairline strip above the ledger: the counters above them stay
+   global ("how bad is today"), the rows below answer the filter. */
+.today-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s3) var(--s5);
+  padding: var(--s3) 0;
+  border-top: 1px solid var(--rule-soft);
+  border-bottom: 1px solid var(--rule-soft);
+  margin-bottom: var(--s4);
+  font-size: var(--t-small);
+}
+.filter-group { display: inline-flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.filter-label { color: var(--muted-foreground); font-size: var(--t-meta); margin-inline-end: 4px; }
+.filter-chip {
+  display: inline-flex; align-items: center;
+  min-height: 26px; padding: 0 9px;
+  border: 1px solid transparent; border-radius: var(--r-pill);
+  color: var(--muted-foreground);
+  transition: color var(--dur-1) var(--ease-out), background-color var(--dur-1) var(--ease-out);
+}
+.filter-chip:hover { color: var(--foreground); background: var(--surface); }
+.filter-chip[aria-current="true"] {
+  color: var(--foreground);
+  border-color: var(--border);
+  background: var(--surface-raised);
+}
+.filter-shown { color: var(--muted-foreground); font-size: var(--t-meta); margin-inline-start: auto; }
+.filter-clear { color: var(--primary); font-size: var(--t-meta); }
+@media (max-width: 900px) {
+  .today-filters { gap: var(--s2) var(--s3); }
+  .filter-shown { margin-inline-start: 0; }
+}

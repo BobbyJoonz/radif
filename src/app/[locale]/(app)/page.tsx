@@ -36,7 +36,13 @@ function dueCell(row: TodayRow, locale: Locale, now: Date, dict: ReturnType<type
   );
 }
 
-export default async function TodayPage({ params }: PageProps<"/[locale]">) {
+export default async function TodayPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const { locale: raw } = await params;
   const locale: Locale = isLocale(raw) ? raw : "fa";
   const dict = getDictionary(locale);
@@ -44,7 +50,23 @@ export default async function TodayPage({ params }: PageProps<"/[locale]">) {
   const ctx = await getSessionContext();
   if (!ctx) redirect(withLocale(locale, "/login"));
 
-  const data = await getToday(ctx);
+  const sp = await searchParams;
+  const assignee = typeof sp.assignee === "string" && sp.assignee ? (sp.assignee as "me" | "unassigned" | string) : undefined;
+  const due = typeof sp.due === "string" && sp.due ? (sp.due as "overdue" | "next24h" | "next7d") : undefined;
+  const filtered = Boolean(assignee || due);
+
+  const data = await getToday(ctx, { assignee, due });
+
+  // Filters live in the URL, so a view is shareable and the back button works.
+  const href = (next: { assignee?: string; due?: string }) => {
+    const q = new URLSearchParams();
+    const a = next.assignee ?? assignee ?? "";
+    const d = next.due ?? due ?? "";
+    if (a) q.set("assignee", a);
+    if (d) q.set("due", d);
+    const qs = q.toString();
+    return `/${locale}${qs ? `?${qs}` : ""}`;
+  };
   const now = new Date();
   const nowHour = hourIn(ctx.tenant.timezone, now);
   const todayLabel = formatFullDate(now, locale, ctx.tenant.timezone);
@@ -101,6 +123,58 @@ export default async function TodayPage({ params }: PageProps<"/[locale]">) {
           <span>{dict.today.pausedWhy}</span>
         </div>
       ) : null}
+
+      <div className="today-filters" role="group" aria-label={dict.today.filters.label}>
+        <span className="filter-group">
+          <span className="filter-label">{dict.today.filters.assignee}</span>
+          {(
+            [
+              ["", dict.today.filters.all],
+              ["me", dict.today.filters.mine],
+              ["unassigned", dict.today.filters.unassigned],
+            ] as const
+          ).map(([value, label]) => (
+            <Link
+              key={value || "all"}
+              href={href({ assignee: value })}
+              className="filter-chip"
+              aria-current={(assignee ?? "") === value ? "true" : undefined}
+            >
+              {label}
+            </Link>
+          ))}
+        </span>
+        <span className="filter-group">
+          <span className="filter-label">{dict.today.filters.due}</span>
+          {(
+            [
+              ["", dict.today.filters.all],
+              ["overdue", dict.today.filters.overdue],
+              ["next24h", dict.today.filters.next24h],
+              ["next7d", dict.today.filters.next7d],
+            ] as const
+          ).map(([value, label]) => (
+            <Link
+              key={value || "all"}
+              href={href({ due: value })}
+              className="filter-chip"
+              aria-current={(due ?? "") === value ? "true" : undefined}
+            >
+              {label}
+            </Link>
+          ))}
+        </span>
+        {filtered ? (
+          <>
+            <span className="filter-shown">
+              {dict.today.filters.shown} {formatNumber(data.items.length, locale)} / {formatNumber(data.counts.open, locale)}
+            </span>
+            <Link className="filter-clear" href={`/${locale}`}>
+              {dict.today.filters.clear}
+            </Link>
+          </>
+        ) : null}
+      </div>
 
       <div className="today-grid">
         <section aria-label={dict.today.title}>
