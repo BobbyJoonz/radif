@@ -160,3 +160,18 @@ use `type="time"` and therefore render "09:00 PM" on a Persian screen; English
 singulars ("1 items") in two Today cells; the Inbox sheet's «نیت پیام» repetition;
 the Settings column edges; the evidence connector is not drawn in the resting
 state. These are the next four hours of work, not unknowns.
+
+## Round 2 — brand assets (supplied after round 1)
+
+| Change | Where |
+|---|---|
+| Official ribbon emblem + wordmark wired in | header lockup (emblem + localised wordmark), login panel (52px), favicon, app icon 512, Apple 180, PWA 192/512 + maskable, social card |
+| Icons generated, not drawn | `scripts/brand-assets.py` trims the supplied PNGs evenly and composites on `#000014`; the old hand-drawn `icon.svg` is gone |
+| Latin word spacing repaired | Peyda's word space is ~0.12em — correct for Persian, visibly tight for Latin. `html[lang="en"]` now gets a normal Latin word space; the document gets +0.02em |
+| English singulars | "1 item", "1 open task" |
+| Login language switch | pinned to the panel's inline-end corner (the 52px lockup had pushed it under the emblem) |
+
+**Still open (found, not fixed):** in the Persian ledger the due cell's first line
+(«۲ روز پیش», «۱۴:۳۰») renders with glyphs colliding at 1440 — the text is correct
+in the DOM and the column is 132px wide, so it is a painting problem in that cell,
+not a content problem. It needs a look in DevTools with the font inspector.

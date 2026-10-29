@@ -112,6 +112,7 @@ html {
 }
 
 body {
+  word-spacing: 0.02em;
   margin: 0;
   min-height: 100svh;
   background: var(--background);
@@ -375,7 +376,7 @@ a { color: inherit; text-decoration: none; }
 .col-customer { width: 30%; }
 .col-why { width: 28%; }
 .col-next { width: 26%; }
-.col-due { width: 108px; }
+.col-due { width: 132px; }
 .col-go { width: 24px; }
 
 .prio { display: inline-block; width: 3px; height: 26px; border-radius: 2px; background: var(--rule); vertical-align: middle; }
@@ -474,7 +475,7 @@ input, select, textarea { min-height: 36px; }
 
 /* The due cell is one line: stamp, separator, tag. Two stacked lines collided in
    a 108px column at 1440 (found in the round-1 critique). */
-.cell-due { line-height: 1.6; }
+.cell-due { line-height: 1.5; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; white-space: normal; }
 .due-main { font-weight: 600; }
 .due-tag { font-size: var(--t-meta); color: var(--muted-foreground); font-weight: 400; white-space: nowrap; }
 .cell-due[data-label="overdue"] .due-main { color: var(--primary); }
@@ -498,3 +499,6 @@ input, select, textarea { min-height: 36px; }
    Latin ("Today'swork"). Restore a normal Latin word space on the English
    document only; Persian keeps the narrow space its script expects. */
 html[lang="en"] { word-spacing: 0.09em; }
+
+.cell-due { word-spacing: 0.06em; }
+.cell-due .due-main { letter-spacing: 0; }

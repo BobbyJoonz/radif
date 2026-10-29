@@ -31,7 +31,7 @@ function dueCell(row: TodayRow, locale: Locale, now: Date, dict: ReturnType<type
   return (
     <>
       <span className="due-main">{stamp}</span>
-      {tag ? <span className="due-tag"> · {tag}</span> : null}
+      {tag ? <span className="due-tag">{tag}</span> : null}
     </>
   );
 }
