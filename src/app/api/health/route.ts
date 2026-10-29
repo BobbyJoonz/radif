@@ -29,7 +29,13 @@ export const GET = handler(async (request: Request) => {
   }
 
   const missing = missingRequiredEnv();
-  const base = { db, demo: isDemo(), missingEnv: missing };
+  // Which build is actually serving? Without this, "did my deploy land?" is a guess.
+  const build = {
+    commit: (process.env.VERCEL_GIT_COMMIT_SHA ?? "").slice(0, 7) || null,
+    env: process.env.VERCEL_ENV ?? null,
+    region: process.env.VERCEL_REGION ?? null,
+  };
+  const base = { db, demo: isDemo(), missingEnv: missing, build };
 
   if (!deep) {
     return ok(base, { status: db === "up" ? 200 : 503 });
