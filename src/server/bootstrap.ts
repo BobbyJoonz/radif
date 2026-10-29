@@ -56,6 +56,18 @@ export async function applyMigrations(): Promise<{ applied: string[] }> {
   try {
     await client.query("BEGIN");
     await client.query(await readFile(migration.file, "utf8"));
+    // Prisma creates its bookkeeping table itself; a hand-applied migration has
+    // to do the same, or the INSERT below (and any later `migrate deploy`) fails.
+    await client.query(`CREATE TABLE IF NOT EXISTS "_prisma_migrations" (
+      "id" VARCHAR(36) NOT NULL PRIMARY KEY,
+      "checksum" VARCHAR(64) NOT NULL,
+      "finished_at" TIMESTAMPTZ,
+      "migration_name" VARCHAR(255) NOT NULL,
+      "logs" TEXT,
+      "rolled_back_at" TIMESTAMPTZ,
+      "started_at" TIMESTAMPTZ NOT NULL DEFAULT now(),
+      "applied_steps_count" INTEGER NOT NULL DEFAULT 0
+    )`);
     await client.query(
       `INSERT INTO "_prisma_migrations"
          ("id","checksum","finished_at","migration_name","logs","rolled_back_at","started_at","applied_steps_count")
