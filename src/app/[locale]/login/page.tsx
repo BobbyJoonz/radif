@@ -35,5 +35,5 @@ export default async function LoginPage({
   const dict = getDictionary(locale);
   void dict;
 
-  return <LoginScreen locale={locale} nextPath={next} state={state} demoMode={isDemo} />;
+  return <LoginScreen locale={locale} nextPath={next} state={state} demoMode={isDemo()} />;
 }

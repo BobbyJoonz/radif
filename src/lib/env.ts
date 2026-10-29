@@ -32,14 +32,49 @@ const EnvSchema = z.object({
   RATE_LIMIT_IMPORT_PER_MIN: z.coerce.number().int().min(1).default(5),
 });
 
-const parsed = EnvSchema.safeParse(process.env);
+export type Env = z.infer<typeof EnvSchema>;
 
-if (!parsed.success) {
-  const issues = parsed.error.issues.map((i) => `  • ${i.path.join(".")}: ${i.message}`).join("\n");
-  throw new Error(`Invalid server environment:\n${issues}\n\nCopy .env.example to .env and fill it in.`);
+let cached: Env | null = null;
+
+/**
+ * Parsed on first use, not on import. A build machine has no runtime secrets,
+ * and a module that throws at import time would take the whole build down with
+ * it; the failure belongs at the first request that actually needs a secret.
+ */
+/**
+ * Vercel/CI builds run without runtime secrets, and Next evaluates route modules
+ * while collecting page data. A build must not fail because a database URL is a
+ * runtime-only secret — but a *server* must never start with a placeholder, so
+ * this substitution is scoped to the build phase only.
+ */
+const BUILD_PLACEHOLDER: Partial<Record<keyof z.infer<typeof EnvSchema>, string>> = {
+  DATABASE_URL: "postgresql://build:build@127.0.0.1:5432/build",
+  BETTER_AUTH_SECRET: "build-phase-placeholder-not-used-at-runtime",
+  BETTER_AUTH_URL: "http://localhost:3000",
+  CHANNEL_TOKEN_ENC_KEY: "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+};
+
+export function getEnv(): Env {
+  if (cached) return cached;
+  const isBuildPhase = process.env.NEXT_PHASE === "phase-production-build";
+  const source = isBuildPhase ? { ...BUILD_PLACEHOLDER, ...process.env } : process.env;
+  const parsed = EnvSchema.safeParse(source);
+  if (!parsed.success) {
+    const issues = parsed.error.issues.map((i) => `  • ${i.path.join(".")}: ${i.message}`).join("\n");
+    throw new Error(`Invalid server environment:\n${issues}\n\nCopy .env.example to .env and fill it in.`);
+  }
+  cached = parsed.data;
+  return cached;
 }
 
-export const env = parsed.data;
+/** `env.DATABASE_URL` still reads naturally; the parse happens on first access. */
+export const env: Env = new Proxy({} as Env, {
+  get(_target, key: string) {
+    return getEnv()[key as keyof Env];
+  },
+});
 
 /** Demo mode is the only mode that seeds or replays data. Production refuses. */
-export const isDemo = env.APP_MODE === "demo";
+export function isDemo(): boolean {
+  return getEnv().APP_MODE === "demo";
+}

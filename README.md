@@ -137,6 +137,45 @@ Read `docs/CONTRACTS.md` before adding a route or a service.
 
 ---
 
+## Deploy on Vercel
+
+The build is self-contained: `postinstall` and `build` both run `prisma generate`
+(the generated client is gitignored build output, and this was the first deploy
+failure). A build also succeeds **without** runtime secrets — Next evaluates route
+modules while collecting page data, so `src/lib/env.ts` substitutes placeholders
+for the build phase only. A *server* still refuses to start without real secrets.
+
+Vercel cannot reach the portable PostgreSQL in `.work/`, so point the project at a
+managed Postgres (Neon, Supabase, Vercel Postgres) and set these Project Settings →
+Environment Variables (Production + Preview):
+
+| Variable | Value |
+|---|---|
+| `DATABASE_URL` | the managed Postgres URL, **with** `?sslmode=require` if the provider asks |
+| `BETTER_AUTH_SECRET` | 32+ random bytes (`openssl rand -base64 32`) |
+| `BETTER_AUTH_URL` | the deployment origin, e.g. `https://radif.vercel.app` |
+| `CHANNEL_TOKEN_ENC_KEY` | base64 32 bytes (AES-256-GCM key for channel tokens) |
+| `APP_MODE` | `demo` for the seeded demo, `production` for a real shop |
+| `INGESTION_MODE` | `replay` (demo) |
+| `DECISION_PROVIDER` | `mock` (no key) or `typesafe` with `TYPESAFE_API_KEY` |
+| `OUTBOUND_MODE` | `preview` |
+
+Then, once per database (from your machine, against the managed URL):
+
+```bash
+DATABASE_URL="postgresql://…" npx prisma migrate deploy
+DATABASE_URL="postgresql://…" npx prisma db seed     # demo mode only
+```
+
+Two things that stay true on Vercel:
+
+- **The worker does not run there.** Vercel serves HTTP; the durable queue needs a
+  long-running process (`pnpm worker`) on a worker host or a scheduled trigger.
+  Without it, messages are stored and queued but never analysed — the UI says so
+  honestly (`analysisState: pending`).
+- **Demo reset** shells out to `prisma/seed.ts`; on a serverless filesystem that
+  call is fine only when the seed file ships (it does), but it is best used locally.
+
 ## Testing
 
 ```bash

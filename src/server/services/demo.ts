@@ -22,7 +22,7 @@ import { validateIncoming } from "@/server/ingestion/schemas";
 const SEED_TIMEOUT_MS = 180_000;
 
 function assertDemoMode(ctx: SessionContext): void {
-  if (!isDemo || !ctx.tenant.isDemo) {
+  if (!isDemo() || !ctx.tenant.isDemo) {
     // Production has no demo data, no replay and no reset (CONTRACTS §2).
     throw errors.forbidden("این کار فقط در حالت نمایشی (demo) در دسترس است.");
   }

@@ -11,6 +11,8 @@ export default defineConfig({
     seed: "tsx prisma/seed.ts",
   },
   datasource: {
-    url: process.env["DATABASE_URL"],
+    // `prisma generate` only reads the schema; a placeholder keeps CI/Vercel
+    // builds working when DATABASE_URL is a runtime-only secret.
+    url: process.env["DATABASE_URL"] ?? "postgresql://placeholder:placeholder@127.0.0.1:5432/placeholder",
   },
 });

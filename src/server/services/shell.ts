@@ -21,7 +21,7 @@ export async function getShellCounts(tenantId: string) {
     }),
   ]);
 
-  return { overdue, needsReview, demo: isDemo };
+  return { overdue, needsReview, demo: isDemo() };
 }
 
 export async function getLastSync(tenantId: string): Promise<string | null> {

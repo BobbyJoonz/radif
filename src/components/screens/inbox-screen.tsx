@@ -150,10 +150,9 @@ export function InboxScreen({ locale, rows, detail, filter, q, role, state, nowI
   }, []);
 
   useEffect(() => {
-    if (!activeId) {
-      setPath(null);
-      return;
-    }
+    // No setState in the effect body: when nothing is selected the connector is
+    // simply not rendered (derived at render), which is also the React 19 rule.
+    if (!activeId) return;
     scrollSpanIntoView(activeId);
     const frame = requestAnimationFrame(() => requestAnimationFrame(measure));
     return () => cancelAnimationFrame(frame);
@@ -273,7 +272,7 @@ export function InboxScreen({ locale, rows, detail, filter, q, role, state, nowI
   return (
     <>
       <div className={styles.inbox} data-selected={conversation ? "true" : "false"} data-sheet-open={sheetOpen}>
-        {path ? (
+        {activeId && path ? (
           <svg className={styles.threadPath} aria-hidden="true" key={path}>
             <path d={path} />
           </svg>
