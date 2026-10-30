@@ -190,7 +190,7 @@ function planSuggestions(input: PlanInput, primary: IntentKey, intents: IntentKe
   // 4. A phone number the provider chose, normalised by our own code.
   const phoneCandidate = findCandidate(candidates, output.phone?.candidateId);
   if (phoneCandidate) {
-    add("order.phone", { value: phoneCandidate.value }, {
+    add("customer.phone", { value: phoneCandidate.value }, {
       candidateId: phoneCandidate.id,
       evidence: { start: phoneCandidate.start, end: phoneCandidate.end },
     });

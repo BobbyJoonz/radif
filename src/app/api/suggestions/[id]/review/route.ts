@@ -4,6 +4,7 @@ import { errors, handler, ok } from "@/server/http";
 import { requireSession } from "@/server/session";
 import type { Prisma } from "@/generated/prisma/client";
 import { readJsonBody } from "../../../_lib/request";
+import { normalizePhone, verificationAfterChange } from "@/server/domain/phone";
 
 /**
  * POST /api/suggestions/:id/review — a human's decision about a proposal
@@ -117,9 +118,6 @@ export const POST = handler(async (request: Request, context: RouteContext) => {
 
 type Applied = { applied: boolean; target: string | null; reason?: string };
 
-const IRAN_MOBILE = /^\+989\d{9}$/;
-const E164 = /^\+[1-9]\d{7,14}$/;
-
 /**
  * Write an accepted/corrected value onto the record it describes (audit #5).
  *
@@ -150,20 +148,22 @@ async function applyOperationalValue(
       input.value && typeof input.value === "object" && "value" in (input.value as object)
         ? (input.value as { value: unknown }).value
         : input.value;
-    const raw = typeof candidate === "string" ? candidate.trim() : "";
-    if (!E164.test(raw) && !IRAN_MOBILE.test(raw)) {
+    const raw = normalizePhone(candidate);
+    if (!raw) {
       throw errors.invalid("شمارهٔ تلفن با قالب بین‌المللی معتبر نیست.");
     }
     if (!input.customerId) return { applied: false, target: null, reason: "no_customer" };
     const before = await tx.customer.findFirst({
       where: { id: input.customerId, tenantId: input.tenantId },
-      select: { phone: true },
+      select: { phone: true, phoneVerifiedAt: true },
     });
     if (!before) return { applied: false, target: null, reason: "no_customer" };
+    // A human accepting a suggestion is not proof of possession (that needs an
+    // OTP), and a different number voids the verification of the old one.
+    const next = verificationAfterChange(before.phone, before.phoneVerifiedAt, raw);
     await tx.customer.update({
       where: { id: input.customerId },
-      // phoneVerifiedAt is untouched on purpose.
-      data: { phone: raw },
+      data: { phone: next.phone, phoneVerifiedAt: next.phoneVerifiedAt },
     });
     await tx.auditEvent.create({
       data: {
@@ -173,8 +173,12 @@ async function applyOperationalValue(
         action: "suggestion.applied",
         entityType: "Customer",
         entityId: input.customerId,
-        before: { phone: before.phone } as Prisma.InputJsonValue,
-        after: { phone: raw, suggestionId: input.suggestionId } as Prisma.InputJsonValue,
+        before: { phone: before.phone, verified: before.phoneVerifiedAt !== null } as Prisma.InputJsonValue,
+        after: {
+          phone: next.phone,
+          verificationInvalidated: next.invalidated,
+          suggestionId: input.suggestionId,
+        } as Prisma.InputJsonValue,
       },
     });
     return { applied: true, target: "customer.phone" };
