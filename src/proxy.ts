@@ -15,6 +15,17 @@ import { LOCALE_COOKIE, defaultLocale, isLocale } from "@/i18n/config";
 export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
 
+  // An *optimistic* gate so an anonymous visitor never waits for a streamed
+  // page that then redirects client-side: a real 307, no flash. The
+  // authoritative check stays in the (app) layout, as the Next docs require.
+  const appMatch = pathname.match(/^\/(fa|en)\/(today|inbox|orders|tasks|customers|import|settings|evaluation)(\/|$)/);
+  if (appMatch && !request.cookies.has("radif.session_token")) {
+    const url = request.nextUrl.clone();
+    url.pathname = `/${appMatch[1]}/login`;
+    url.search = `?next=${encodeURIComponent(pathname + search)}`;
+    return NextResponse.redirect(url);
+  }
+
   const hasLocale = /^\/(fa|en)(\/|$)/.test(pathname);
   if (hasLocale) {
     const response = NextResponse.next();
