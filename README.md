@@ -1,257 +1,313 @@
 <p align="center">
-  <img src="brand/source/radif-lockup-source.png" alt="Radif — ردیف" height="76">
+  <img src="brand/source/radif-lockup-source.png" alt="ردیف — Radif" height="88">
 </p>
 
-# ردیف · Radif
+<p align="center">
+  <b>میز سفارش فروشگاه‌های اینستاگرامی</b><br>
+  <sub>هر دایرکت، سرِ ردیفش.</sub>
+</p>
 
-![ردیف — Radif](docs/brand.png)
-
-**میز سفارش فروشگاه‌های اینستاگرامی** — the order desk for Instagram sellers.
-Persian-first (RTL), bilingual FA/EN, real PostgreSQL, no API key needed to run.
-
-> «هر دایرکت، یک ردیف روشن.» — every DM becomes one clear row.
-
-The product's whole claim is that **every value has a witness**. A message from a
-customer arrives, the system proposes intents and fields *with the exact span of
-the message that supports them*, a human confirms, and the reply is read back
-from the confirmed state — never invented. A customer saying "I paid" produces a
-**payment claim**, never a verified payment.
+<p align="center">
+  <a href="README.en.md">🇬🇧 English</a> ·
+  <a href="#شروع-سریع">شروع سریع</a> ·
+  <a href="#صفحه‌ها-و-هر-گزینه‌شان">صفحه‌ها</a> ·
+  <a href="#تنظیمات-و-همهٔ-گزینه‌ها">تنظیمات</a> ·
+  <a href="#استقرار-روی-ورکل">استقرار</a>
+</p>
 
 ---
 
-## What actually works (phases 1–2)
+## این چیست؟
 
-| Area | State |
-|---|---|
-| Persian RTL + English LTR UI, own fonts, own tokens | ✅ |
-| PostgreSQL schema + real migration (24 tables, tenant-integrity FKs, CHECK guards) | ✅ |
-| Demo seed: 2 isolated shops, 12+ conversations, `DEMO-*` ids | ✅ |
-| Ingestion from JSON/CSV file and replay, with preview + rejected rows | ✅ |
-| Durable queue on Postgres (`FOR UPDATE SKIP LOCKED` + lease), crash-safe worker | ✅ |
-| Structured decision provider (`mock`, deterministic) + typed `TypeSafeDecisionProvider` seam | ✅ |
-| Evidence-backed suggestions, accept/correct/reject, human edits win | ✅ |
-| Independent order / payment / shipment state machines | ✅ |
-| Today queue, Inbox (queue · thread · action sheet), Orders, Tasks, Customers, Import, Settings, Evaluation | ✅ |
-| Reply preview from stored state (never marks anything as sent) | ✅ |
-| Owner/operator authorization enforced server-side | ✅ |
-| Phase 3–5 contracts, feature flags off, honest "not tested" labels | 📄 see `docs/PHASES.md` |
+**ردیف** یک میز کار است، نه یک داشبورد دیگر. فروشندهٔ اینستاگرامی پیام‌های پراکنده را در دایرکت می‌گیرد — «واریز کردم»، «کد رهگیری کو؟»، «آدرسم عوض شد» — و ردیف این پراکندگی را به **یک صف روشن از اقدام‌های بعدی** تبدیل می‌کند:
 
-Not implemented on purpose: live Instagram connection, OTP identity, customer
-portal, marketing automation. There is no fake "connected" badge anywhere.
+> پیام مشتری می‌آید ← سیستم درخواست‌ها را می‌فهمد ← برای هر مقدار **شاهد** نشان می‌دهد ← فروشنده تأیید می‌کند ← پاسخ از روی وضعیت **تأییدشده** نوشته می‌شود.
+
+اصل محصول در یک جمله: **هیچ مقداری بدون شاهد، و هیچ ادعایی بدون تأیید.** «واریز کردم» یک **ادعای پرداخت** می‌سازد، نه پرداخت تأییدشده. تأیید پیش‌نویس سفارش هم پرداخت را تأیید نمی‌کند.
+
+**برای چه کسی؟** فروشنده و یک اپراتور در فروشگاه کوچکی که سفارش‌ها را در دایرکت می‌گیرد. زبان کاری فارسی و راست‌به‌چپ است؛ انگلیسی زبان دوم همان رابط است. در دسکتاپ عریض: صف، متن گفتگو و پنل اقدام کنار هم؛ در موبایل: یک ستون با نوار پایین.
 
 ---
 
-## Two front doors
+## شروع سریع (۳ دقیقه)
 
-`/{fa|en}` is the **public landing page** (no session): hero, what the product
-claims and refuses to claim, how it works, FAQ, and two ways in — an orange
-"شروع رایگان" that opens real registration (`/signup`, which creates a shop and
-the owner membership through `/api/onboarding`), and "بدون ثبتنام امتحان کن" which
-hands out a **random demo account** (`/api/guest`) and signs you in through the
-normal Better Auth endpoint — no separate guest auth path, no faked session.
-
-`/{fa|en}/today` is the product itself, behind the session.
-
-## Run it
-
-Requirements: Node 22+, pnpm 10+, and a PostgreSQL 17 database.
+پیش‌نیاز: **Node 22+**، **pnpm 10+** و یک **PostgreSQL 17**.
 
 ```bash
 pnpm install
 
-# 1. Database. Either your own server:
-#      cp .env.example .env   → set DATABASE_URL
-#    or the bundled Windows portable cluster (downloads PostgreSQL, no Docker):
-pnpm db:init        # first time: initdb + create radif & radif_test, then start
-pnpm db:start       # afterwards
+# ۱) دیتابیس — یکی از دو راه:
+pnpm db:init          # ویندوز: پستگرس پرتابل را می‌سازد و بالا می‌آورد (بدون داکر)
+# یا: docker compose up -d     ← پستگرس روی پورت ۵۴۳۵
 
-# 2. Schema + demo data + client
-pnpm db:deploy      # applies prisma/migrations
-pnpm db:generate
-pnpm db:seed        # DEMO-* data in two isolated shops
+# ۲) جدول‌ها + دادهٔ نمایشی
+pnpm db:deploy
+pnpm db:seed
 
-# 3. Run
-pnpm dev            # http://localhost:3000 → redirects to /fa
-pnpm worker         # in a second terminal: the queue worker
+# ۳) اجرا
+pnpm dev              # http://localhost:3000  → خودش به /fa می‌رود
+pnpm worker           # ترمینال دوم: پردازش صف (تحلیل پیام)
 ```
 
-With Docker instead of the portable cluster:
+> **روی دیپلوی خالی (مثل Vercel):** لازم نیست کار خاصی بکنی. اولین بازدید، خودش جدول‌ها را می‌سازد و فروشگاه دمو را seed می‌کند (`src/server/ensure.ts`). اگر دستی بخواهی: `/api/setup` را یک‌بار باز کن.
 
-```bash
-docker compose up -d   # postgres 17 on 5435, database radif
-```
+### حساب‌های دمو
 
-### Demo accounts (demo mode only, created by the seed)
-
-| Email | Role | Shop |
+| ایمیل | نقش | فروشگاه |
 |---|---|---|
-| `maryam@toranj.demo` | owner | آتلیهٔ ترنج |
-| `saeed@toranj.demo` | operator | آتلیهٔ ترنج |
-| `raha@raha.demo` | owner | کفش‌خانهٔ رها |
+| `maryam@toranj.demo` | مالک | آتلیهٔ ترنج |
+| `saeed@toranj.demo` | اپراتور | آتلیهٔ ترنج |
+| `raha@raha.demo` | مالک | کفش‌خانهٔ رها (اثبات جدایی داده) |
 
-Password for all three: `radif-demo-1405`
+گذرواژهٔ هر سه: **`radif-demo-1405`**. این حساب‌ها فقط در حالت دمو ساخته می‌شوند و به هیچ حساب واقعی دسترسی ندارند.
 
-The owner can verify payments and change settings; the operator visibly cannot
-(the server returns 403, the button is not merely hidden).
-
----
-
-## Modes and configuration
-
-Everything lives in `.env` (see `.env.example`); no secret is ever shipped to
-the client bundle or logged.
-
-```dotenv
-APP_MODE=demo                 # demo | production
-INGESTION_MODE=replay         # replay | file | live
-DECISION_PROVIDER=mock        # mock | typesafe
-TYPESAFE_MODEL=jev-1.14.0
-TYPESAFE_API_KEY=             # empty → the typesafe provider refuses to start
-DRAFT_PROVIDER=none
-OUTBOUND_MODE=preview         # preview | live
-LIVE_AUTOMATION_ENABLED=false
-```
-
-`demo` seeds synthetic data and enables `/api/demo/replay` and `/api/demo/reset`.
-`production` refuses to seed, refuses replay/reset, and refuses to boot with the
-mock provider for live automation.
-
-**Replacing the decision provider** is one file: implement `DecisionProvider`
-(`src/server/providers/decision.ts`) and return it from the factory. Nothing in
-the UI knows which provider ran; `AnalysisRun` records which one did.
+**زبان:** از دکمهٔ «EN / فا» در نوار بالا (و گوشهٔ صفحهٔ ورود) هر لحظه زبان عوض می‌شود؛ مسیرها `/fa` و `/en` هستند، پس هر صفحه لینک‌شدنی است.
 
 ---
 
-## Architecture in one screen
+## نقش‌ها و دسترسی‌ها (کنترل سمت سرور)
 
-```
-Browser ── server components ──► src/server/services/*  (tenant from session only)
-   │                                   │
-   └── client mutations ──► /api/* ────┘
-                                       ├── Prisma 7 (driver adapter, pg)
-                                       └── Postgres 17
-worker ── claim job (SKIP LOCKED + lease) ──► provider ──► suggestions + tasks
-```
+| کار | مالک | اپراتور |
+|---|:---:|:---:|
+| دیدن صف، گفتگوها، سفارش‌ها، کارها، مشتری‌ها | ✅ | ✅ |
+| تأیید/اصلاح/رد پیشنهادهای سیستم | ✅ | ✅ |
+| تأیید پیش‌نویس سفارش | ✅ | ✅ |
+| ثبت کد رهگیری و وضعیت ارسال | ✅ | ✅ |
+| **تأیید یا رد پرداخت** | ✅ | ❌ (۴۰۳ از سرور) |
+| **تغییر تنظیمات حساس** (ساعت کاری، SLA، توقف ارسال، نرخ) | ✅ | ❌ |
+| **بازنشانی دادهٔ نمایشی** | ✅ | ❌ |
 
-Boundaries that matter:
+نقش‌ها روی `Membership` و **به‌ازای هر فروشگاه** ذخیره می‌شوند؛ یک نفر می‌تواند در یک فروشگاه مالک و در فروشگاه دیگر اپراتور باشد. مخفی‌کردن دکمه کافی نیست: سرویس و روت هر دو اجازه را بررسی می‌کنند.
 
-- `src/server/domain/**` — pure rules (Persian normalisation, candidate spans,
-  priority, dedupe, state transitions). No I/O, unit-tested.
-- `src/server/providers/**` — decision models behind one interface.
-- `src/server/channels/**` — where messages come from (file, replay, later the
-  official Instagram API). The `IncomingMessage` contract is source-independent.
-- `src/server/services/**` — the only layer a page may read.
-- `src/app/api/**` — thin: auth → zod → service → `{ ok, data }`.
-- `src/lib/dto.ts` — the boundary types both sides compile against.
-
-Read `docs/CONTRACTS.md` before adding a route or a service.
+> **نقش «مشتری»** امروز وجود ندارد و عمداً ساخته نشده: طبق سند، اولین قدم فاز ۴ یک **لینک خصوصی وضعیت سفارش** است (توکن تصادفی، هش‌شده، با انقضا) که فعلاً در بک‌لاگ است.
 
 ---
 
-## Deploy on Vercel
+## صفحه‌ها و هر گزینه‌شان
 
-The build is self-contained: `postinstall` and `build` both run `prisma generate`
-(the generated client is gitignored build output, and this was the first deploy
-failure). A build also succeeds **without** runtime secrets — Next evaluates route
-modules while collecting page data, so `src/lib/env.ts` substitutes placeholders
-for the build phase only. A *server* still refuses to start without real secrets.
+### ۱) امروز — «الان چه کاری؟»
+- سه شمارندهٔ **واقعی** از دیتابیس: کار باز، عقب‌افتاده، نیازمند بررسی.
+- صف کار به‌صورت دفتر: هر ردیف **چرا اینجاست**، **اقدام بعدی**، **موعد** و نشان منبع (بازپخش/فایل).
+- **فیلتر مسئول و موعد** در URL: همه/من/بدون مسئول × همه/عقب‌افتاده/۲۴ ساعت آینده/۷ روز آینده.
+- نوار کنار: تراکم واقعی پیام‌های ۲۴ ساعت گذشته (هر میله یک ساعت) + میانگین پاسخ.
+- دکمهٔ «شروع از مهم‌ترین» → مستقیم به بالاترین اولویت.
+- عددهای بالای صفحه عمداً با فیلتر عوض نمی‌شوند: پاسخ «امروز چقدر بد است» نباید با فیلتر تغییر کند.
 
-Vercel cannot reach the portable PostgreSQL in `.work/`, so point the project at a
-managed Postgres (Neon, Supabase, Vercel Postgres) and set these Project Settings →
-Environment Variables (Production + Preview):
+### ۲) صندوق گفتگو — قلب محصول
+سه ستون: **صف گفتگو · متن پیام با شاهد · پنل پیشنهادها**.
+- جستجو و فیلتر: همه، بی‌پاسخ، اعلام پرداخت، نیازمند بررسی.
+- با انتخاب هر فیلد پیشنهادی، **خط مویی** از آن فیلد تا همان بازهٔ متن پیام کشیده می‌شود (امضای محصول).
+- هر پیشنهاد وضعیت خودش را دارد: **پیشنهاد / پذیرفته / اصلاح‌شده / ردشده**؛ مقدار پیشنهادی پس از ثبت تغییرناپذیر است.
+- اقدام‌ها: پذیرش، اصلاح، رد؛ بازبینی و تأیید پیش‌نویس؛ **پیش‌نمایش پاسخ** (هیچ‌وقت «ارسال شد» نمی‌سازد).
 
-| Variable | Value |
+### ۳) سفارش‌ها
+- فهرست + جزئیات با تب‌های اقلام، پرداخت، ارسال، کارها، سابقه.
+- **سه ماشین وضعیت مستقل** روی یک صفحه: سفارش، پرداخت، ارسال.
+- پیش‌نویس قابل ویرایش با **قفل خوش‌بینانه**: دو ویرایش هم‌زمان → ۴۰۹ و پیام «نسخهٔ تازه را ببینید».
+- دکمهٔ «تأیید پیش‌نویس» فقط وضعیت سفارش را عوض می‌کند.
+
+### ۴) کارها
+- فهرست با مسئول، موعد، وضعیت، علت ایجاد و پیوند به پیام/سفارش.
+- وضعیت‌ها: باز، در حال انجام، منتظر مشتری، انجام‌شده. عقب‌افتادگی از موعد محاسبه می‌شود، نه از لحن پیام.
+- بستن کار، کلید یکتاسازی را آزاد می‌کند تا درخواست **واقعاً تازه** بتواند کار تازه بسازد.
+
+### ۵) مشتری‌ها
+- شناسهٔ داخلی، کانال‌های شناخته‌شده، وضعیت تأیید شماره، سفارش‌ها و **timeline** یکپارچه.
+- مشتری هرگز بر اساس شباهت نام/یوزرنیم ادغام نمی‌شود.
+
+### ۶) ورودی — پیام از فایل تا پیش‌نویس
+- JSON/CSV با **پیش‌نمایش**: ستون‌ها، ردیف‌های پذیرفته/ردشده و **دلیل هر رد**.
+- محدودیت‌ها: ۵ مگابایت و ۵٬۰۰۰ ردیف.
+- اگر فایل شناسهٔ پیام نداشته باشد، کلید پایدار از هویت import ساخته می‌شود؛ hash متن تنها کلید نیست (مشتری می‌تواند همان متن را دوباره بفرستد).
+- ثبت دوبارهٔ همان فایل → صفر پیام تازه، همه تکراری.
+
+### ۷) تنظیمات
+- ساعت کاری، SLA پاسخ اول و ارسال، **تازگی قیمت/موجودی**.
+- **توقف سفارش تازه** و **توقف ارسال** (دو تصمیم جدا؛ پاسخ‌ها هر دو را منعکس می‌کنند).
+- وضعیت واقعی اتصال کانال: «آمادهٔ پیکربندی؛ اتصال زنده آزموده نشده» — هیچ نشان سبز دروغینی نیست.
+- کاتالوگ با زمان آخرین تأیید قیمت، نرخ ارزیابی مدل با تاریخ خواندن، و برچسب «فاز بعد» برای قابلیت‌های آینده (بدون دکمهٔ بی‌عمل).
+
+### ۸) ارزیابی
+- جدول `AnalysisRun`: مدل و provider واقعی، نسخهٔ پرسش و قواعد، زمان صف تا نمایش، تعداد تلاش، توکن و هزینه و نرخ تاریخ‌دار.
+- هر عددی که سرویس گزارش نکرده باشد **«نامشخص»** است، نه صفر. مقایسهٔ «cascade در برابر مدل مولد» تا وقتی نمونه ندارد «اندازه‌گیری‌نشده» می‌ماند.
+
+### ۹) ورود / ثبت‌نام
+- ایمیل + گذرواژه با Better Auth؛ فهرست حساب‌های دمو با یک کلیک پر می‌شود.
+- خطاها تفکیک‌شده‌اند: دامنهٔ نامعتبر ≠ گذرواژهٔ غلط ≠ محدودیت تعداد ≠ قطع شبکه.
+- **ثبت‌نام:** هر حساب تازه در همان درخواست، فروشگاه اختصاصی خودش را می‌گیرد (Tenant + تنظیمات + عضویت owner) تا هرگز در حلقهٔ ورود نماند.
+
+### ۱۰) صفحه‌های آخر
+بارگذاری، خطا، ۴۰۴ (هم داخل زبان و هم بیرون از آن) با نشان برند — نه صفحهٔ سفید Next.
+
+---
+
+## چرخهٔ کار
+
+```mermaid
+flowchart LR
+  A[پیام مشتری<br/>فایل · بازپخش · بعداً اینستاگرام] --> B[ذخیرهٔ اتمیک<br/>Message + Job]
+  B --> C[صف پایدار<br/>SKIP LOCKED + lease]
+  C --> D{تحلیل ساختاریافته<br/>mock یا provider واقعی}
+  D -->|شاهد پیدا شد| E[پیشنهادها<br/>field + evidence span]
+  D -->|ابهام یا خطا| F[ارجاع به انسان<br/>کار بررسی]
+  E --> G[فروشنده: پذیرش/اصلاح/رد]
+  G --> H[تأیید پیش‌نویس سفارش]
+  H --> I[وضعیت‌های مستقل<br/>سفارش · پرداخت · ارسال]
+  I --> J[پیش‌نمایش پاسخ<br/>از وضعیت تأییدشده]
+  F --> G
+```
+
+قواعد سختی که در کد و تست قفل شده‌اند:
+
+- یک webhook/import دوباره → **یک** پیام و **یک** مجموعهٔ اقدام.
+- ادعای پرداخت هرگز تأیید خودکار نمی‌شود؛ تأیید پرداخت فقط با انسانِ مجاز.
+- تأیید پیش‌نویس در پرداخت و ارسال دست نمی‌برد.
+- یک پیام چند درخواسته → همه حفظ می‌شوند.
+- دو سفارش باز + «کد رهگیری» → اتصال تصادفی نمی‌سازیم؛ نیازمند بررسی.
+- نبود کد رهگیری → کد ساختگی نمی‌سازیم؛ کار پیگیری می‌سازیم.
+- مبلغ بدون واحد → no conversion، پیشنهاد مبهم + نیاز به بررسی.
+- تغییر آدرس بعد از ارسال → کار انسانی، مرسوله دست‌نخورده.
+- دستور داخل دایرکت («پرداخت‌شده کن») = **داده**، نه دستور سیستم.
+- شناسهٔ فروشگاه دیگر → ۴۰۴، بدون لو دادن وجود.
+- timeout یا خروجی خراب مدل → پیام می‌ماند، بررسی دستی، retry کنترل‌شده.
+- restart ورکر → بازیابی بدون تکثیر.
+- دو ویرایش هم‌زمان → ۴۰۹ آشکار.
+
+---
+
+## تنظیمات و همهٔ گزینه‌ها
+
+همه در `.env` (نمونه: `.env.example`). هیچ کلیدی به باندل کلاینت نمی‌رود و در لاگ چاپ نمی‌شود.
+
+### حالت‌ها و ارائه‌دهنده‌ها
+
+| متغیر | مقدارها | معنا |
+|---|---|---|
+| `APP_MODE` | `demo` (پیش‌فرض) · `production` | فقط دمو seed/replay/reset دارد؛ production آن‌ها را رد می‌کند |
+| `INGESTION_MODE` | `replay` · `file` · `live` | مسیر ورود پیام |
+| `DECISION_PROVIDER` | `mock` · `typesafe` | `mock` قطعی و بدون کلید؛ `typesafe` نیاز به کلید دارد و در production اجازهٔ mock وجود ندارد |
+| `TYPESAFE_MODEL` | پیش‌فرض `jev-1.14.0` | مدل تصمیم ساختاریافته |
+| `TYPESAFE_API_KEY` | خالی | بدون کلید، provider واقعی با خطای صریح بالا نمی‌آید |
+| `DRAFT_PROVIDER` | `none` · `template` | تولید پیش‌نویس متنی |
+| `OUTBOUND_MODE` | `preview` · `live` | در فاز ۲ فقط preview |
+| `LIVE_AUTOMATION_ENABLED` | `false` | کلید اصلی ارسال خودکار؛ در دمو روشن نمی‌شود |
+
+### زیرساخت و امنیت
+
+| متغیر | کاربرد |
 |---|---|
-| `DATABASE_URL` | the managed Postgres URL, **with** `?sslmode=require` if the provider asks |
-| `BETTER_AUTH_SECRET` | 32+ random bytes (`openssl rand -base64 32`) |
-| `BETTER_AUTH_URL` | the deployment origin, e.g. `https://radif.vercel.app` |
-| `CHANNEL_TOKEN_ENC_KEY` | base64 32 bytes (AES-256-GCM key for channel tokens) |
-| `APP_MODE` | `demo` for the seeded demo, `production` for a real shop |
-| `INGESTION_MODE` | `replay` (demo) |
-| `DECISION_PROVIDER` | `mock` (no key) or `typesafe` with `TYPESAFE_API_KEY` |
-| `OUTBOUND_MODE` | `preview` |
-
-Then, once per database (from your machine, against the managed URL):
-
-```bash
-DATABASE_URL="postgresql://…" npx prisma migrate deploy
-DATABASE_URL="postgresql://…" npx prisma db seed     # demo mode only
-```
-
-Two things that stay true on Vercel:
-
-- **The worker does not run there.** Vercel serves HTTP; the durable queue needs a
-  long-running process (`pnpm worker`) on a worker host or a scheduled trigger.
-  Without it, messages are stored and queued but never analysed — the UI says so
-  honestly (`analysisState: pending`).
-- **Demo reset** shells out to `prisma/seed.ts`; on a serverless filesystem that
-  call is fine only when the seed file ships (it does), but it is best used locally.
-
-## Testing
-
-```bash
-pnpm typecheck
-pnpm lint
-pnpm test            # vitest: domain rules + integration against radif_test
-pnpm worker:once     # drains the queue once, for CI and for demos
-```
-
-The suite is written against the real risk table (duplicate webhooks, payment
-claims never auto-verified, confirm-draft not touching payment, multi-intent
-messages, two open orders, missing tracking code, unit-less amounts, address
-change after shipping, cross-tenant ids, operator without permission, prompt
-injection, provider timeout, worker restart, concurrent edits, reply copy).
-
-Database backup/restore: `pg_dump`/`pg_restore` notes and a verified restore drill
-are in `docs/PHASES.md` §Backup.
+| `DATABASE_URL` | رشتهٔ اتصال پستگرس (برای Vercel باید ابری باشد) |
+| `BETTER_AUTH_SECRET` / `BETTER_AUTH_URL` | نشست و مبدأ مجاز |
+| `CHANNEL_TOKEN_ENC_KEY` | مهرکردن توکن کانال با AES-256-GCM (کلید بیرون از دیتابیس) |
+| `WORKER_POLL_MS` | فاصلهٔ نظرسنجی صف |
+| `RATE_LIMIT_LOGIN_PER_MIN` / `RATE_LIMIT_IMPORT_PER_MIN` | سقف درخواست ورود و ورودی فایل |
 
 ---
 
-## Design
+## دیتای نمایشی
 
-The direction, palette, type scale, motion signature and copy voice are in
-[`DIRECTION.md`](DIRECTION.md); the scanned/critiqued results are in
-[`CRITIQUE.md`](CRITIQUE.md). Three explorations are in `explore/`, rendered
-evidence in `shots/`.
+| چیز | مقدار |
+|---|---|
+| فروشگاه‌ها | ۲ (کاملاً جدا؛ آزمون جدایی داده) |
+| گفتگوها | ۱۶ (۱۳ در فروشگاه اول) |
+| پیام‌ها | فارسی محاوره‌ای، اعداد فارسی/عربی، غلط تایپی، چند درخواست در یک پیام، آدرس ناقص، دستور مخرب داخل متن |
+| سفارش‌ها | `DEMO-ORD-1042` · `-1039` · `-1031` · `-1027` · `-0998` |
+| کارها | ۱۱ (شامل عقب‌افتاده و نیازمند بررسی) |
+| پیشنهادها | ۵ روی پیام شاخص، با شاهد و offset دقیق |
+| ادعای پرداخت / محموله / audit | بله، در وضعیت‌های مختلف |
 
-Fonts: **Peyda** (پیدا) by [Behgraph](https://behgraph.ir), self-hosted as WOFF2
-in `public/fonts/peyda/` — nine real weights, no request to any font service.
-The files were supplied by the project owner; check Behgraph's current licence
-terms before redistributing them outside this project. Latin letters and digits
-come from Peyda itself; machine values use the system mono stack.
+پیام شاخص دمو:
+
+> **نگار احمدی · ۲۱:۰۴** — «واریز کردم، کد رهگیری رو می‌فرستید؟ آدرسم هم عوض شده، هنوز نفرستادید؟»
+
+از این یک پیام، سیستم **سه** درخواست را هم‌زمان می‌بیند و به **همان سفارش موجود** وصل می‌کند؛ آدرس تازه را خالی می‌گذارد چون مشتری نشانی نداده است.
+
+**بازنشانی:** تنظیمات → «بازنشانی دادهٔ نمایشی» یا `POST /api/demo/reset` (فقط مالک، فقط دمو).
 
 ---
 
-## Repository map
+## اجرا و اسکریپت‌ها
+
+| دستور | کار |
+|---|---|
+| `pnpm dev` | سرور توسعه |
+| `pnpm build` / `pnpm start` | بیلد و اجرای تولیدی |
+| `pnpm typecheck` / `pnpm lint` | تایپ و لینت |
+| `pnpm test` | ۸۶ تست Vitest روی پستگرس واقعی |
+| `pnpm e2e` | تست انتها-به-انتها با Playwright (نیاز به سرور بالا) |
+| `pnpm worker` / `pnpm worker:once` | صف پایدار / یک‌بار خالی‌کردن صف |
+| `pnpm db:init` / `db:start` / `db:stop` / `db:status` | کلاستر پرتابل محلی |
+| `pnpm db:deploy` / `db:migrate` / `db:seed` / `db:studio` / `db:reset` | مایگریشن · داده · استودیو |
+| `pnpm design:shots` | اسکرین‌شات و اسکن همهٔ صفحه‌ها (با نشست واقعی) |
+
+---
+
+## آزمون‌ها و کیفیت
+
+| دروازه | وضعیت |
+|---|---|
+| `tsc --noEmit` | ۰ خطا |
+| `pnpm lint` | ۰ خطا |
+| `pnpm build` | موفق |
+| `pnpm test` | **۱۰ فایل، ۸۶ تست، همه سبز** روی `radif_test` |
+| اسکن طراحی | همهٔ صفحه‌ها در ۱۴۴۰/۳۹۰/۳۲۰ بدون FAIL |
+| ورکر | `worker:once` بدون خطا؛ اجرای دوباره ۰ بازیابی (idempotent) |
+
+تست‌ها روی خطرهای واقعی نوشته شده‌اند: تکرار webhook، تأیید نکردن پرداخت با پیام مشتری، عدم تغییر پرداخت هنگام تأیید پیش‌نویس، چند درخواست در یک پیام، دو سفارش باز، نبود کد رهگیری، مبلغ بدون واحد، تغییر آدرس بعد از ارسال، شناسهٔ فروشگاه دیگر، اپراتور بدون مجوز مالی، تزریق دستور، timeout مدل، و تعارض دو ویرایش.
+
+---
+
+## استقرار روی ورکل
+
+1. یک پستگرس ابری بساز (Neon / Supabase / Vercel Postgres) و `DATABASE_URL` را در Environment Variables بگذار.
+2. `BETTER_AUTH_SECRET` (حداقل ۱۶ کاراکتر) و `BETTER_AUTH_URL` = دامنهٔ نهایی.
+3. Deploy. **اولین بازدید** خودش مایگریشن و دادهٔ دمو را می‌سازد. اگر دستی خواستی: `/api/setup`.
+4. `pnpm worker` را جایی اجرا کن که به همان دیتابیس دسترسی دارد (worker روی Vercel serverless نمی‌ماند).
+
+**اگر صفحهٔ «دیتابیس آماده نیست» را دیدی:** یعنی `DATABASE_URL` ست نشده یا به میزبان محلی اشاره می‌کند. `127.0.0.1` از Vercel در دسترس نیست. بعد از تنظیم متغیر، یک redeploy و یک بازدید کافی است.
+
+---
+
+## طراحی و برند
+
+- پالت از سند شما و تغییرنکرده: `#000014` شب · `#0B0B3F` سطح · `#11115A` برجسته · `#333377` خط · `#FF852E` چراغ (فقط یک کار: اقدام اصلی / «الان به تو نیاز است» / شاهد) · `#ECECF6` مرکب · `#B5B6DD` خاکستری.
+- فونت **پیدا** با ۹ وزن، self-host به‌صورت WOFF2؛ لاتین و ارقام از خود Peyda؛ مقادیر ماشینی با مونو و جداسازی LTR.
+- لوگوی رسمی در هدر/ورود/فاوآیکون/PWA/کارت اجتماعی؛ آیکون‌ها با `scripts/brand-assets.py` از همان فایل‌ها ساخته می‌شوند (رنگ برند `#F87820` هرگز عوض نمی‌شود).
+- جهت کامل در `DIRECTION.md`، فرایند و نقدش در `CRITIQUE.md`، انطباق با سند در `docs/CONFORMANCE.md`.
+
+---
+
+## ساختار پروژه
 
 ```
-prisma/            schema, migration (with hand-written tenant guards), seed
-src/app/[locale]/  FA/EN routes: Today, Inbox, Orders, Tasks, Customers…
-src/app/api/       REST for client mutations and tests
-src/components/    shell, primitives, screen bodies
-src/server/        domain, providers, channels, ingestion, services, worker
-src/i18n/          locale config, formatting, dictionaries (fa/en)
-docs/              CONTRACTS.md, PHASES.md
-explore/, shots/   design process evidence
-scripts/           pg-local.ps1 (portable PostgreSQL), design shots
+prisma/            اسکیما، مایگریشن (با قیود هم‌مستأجر)، seed
+src/app/[locale]/  مسیرهای فارسی/انگلیسی: امروز، صندوق، سفارش‌ها، کارها…
+src/app/api/       ۲۵ روت REST برای تغییرات کلاینت و تست
+src/components/    پوسته، سربرگ، پریتیوها، بدنهٔ صفحه‌ها
+src/server/        domain · providers · channels · ingestion · services · worker
+src/i18n/          تنظیم زبان، قالب‌بندی (ارقام/تاریخ/پول)، دیکشنری fa/en
+docs/              CONTRACTS · PHASES · CONFORMANCE · DEMO · OPTIMIZATION
+brand/             فایل‌های رسمی برند + خط تولید آیکون
+explore/ · shots/  شواهد فرایند طراحی
+scripts/           pg-local.ps1 · brand-assets.py · design-shots.mjs
 ```
 
-## Brand
+---
 
-The ribbon emblem and wordmarks in `brand/source/` are supplied brand files —
-never recoloured or redrawn. All icons and UI lockups are generated:
+## فازهای بعدی (صادقانه)
 
-```bash
-python scripts/brand-assets.py     # icons, favicons, PWA tiles, UI lockups
-```
+| فاز | وضعیت |
+|---|---|
+| ۱ و ۲ — پیام تا پیش‌نویس، تأیید و صف امروز | ✅ ساخته و آزموده |
+| ۳ — اتصال زندهٔ رسمی اینستاگرام | ❌ قرارداد آماده؛ اتصال واقعی آزموده نشده |
+| ۴ — هویت مشتری، لینک وضعیت سفارش، OTP | ❌ بک‌لاگ |
+| ۵ — یادآوری و بازاریابی | ❌ بک‌لاگ (یادآوری **داخلی** فروشنده در فاز ۲ هست) |
 
-The header shows the emblem plus a **localised** wordmark («ردیف» in Peyda 800
-for Persian, "radif" for English) because the supplied wordmark is Latin-only;
-the supplied lockup files are used as-is on the login panel, the social card and
-the app icon. Brand orange is #F87820, the UI accent token is #FF852E — see
-`DIRECTION.md` §3b.
+جزئیات و معیار پذیرش هر فاز: [`docs/PHASES.md`](docs/PHASES.md).
 
-## Licence
+---
 
-Source: private project. Demo data is synthetic; `DEMO-*` identifiers exist so it
-can never be mistaken for a real shop's records.
+<p align="center">
+  <sub>دادهٔ نمایشی ساختگی است و با پیشوند <code>DEMO-</code> مشخص شده تا هرگز با پروندهٔ واقعی اشتباه نشود. ·
+  <a href="README.en.md">Read in English</a></sub>
+</p>

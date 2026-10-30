@@ -84,7 +84,7 @@ async function upsertConnection(id: string, tenantId: string, accountRef: string
   });
 }
 
-async function upsertPeople(tenantId: string, connectionId: string, people: Person[]) {
+async function upsertPeople(tenantId: string, connectionId: string, people: Person[], messageBase: number) {
   for (const person of people) {
     await prisma.customer.upsert({
       where: { id: person.id },
@@ -110,7 +110,7 @@ async function upsertPeople(tenantId: string, connectionId: string, people: Pers
         createdAt: person.at,
       },
     });
-    const messageId = `DEMO-MSG-${9001 + people.indexOf(person)}`;
+    const messageId = `DEMO-MSG-${messageBase + people.indexOf(person)}`;
     await prisma.message.upsert({
       where: { id: messageId },
       update: { text: person.text, occurredAt: person.at },
@@ -148,8 +148,8 @@ export async function seedRichDemo(): Promise<{
   await upsertMember("user_raha", R, "رها مقدم", "raha@raha.demo", "owner", password);
   await upsertConnection(CONN_T, T, "toranj.studio", "آتلیهٔ ترنج");
   await upsertConnection(CONN_R, R, "raha.shoes", "کفش‌خانهٔ رها");
-  await upsertPeople(T, CONN_T, toranjPeople);
-  await upsertPeople(R, CONN_R, rahaPeople);
+  await upsertPeople(T, CONN_T, toranjPeople, 9001);
+  await upsertPeople(R, CONN_R, rahaPeople, 9201);
 
   // a reply from the shop, so every thread is a conversation and not one message
   await prisma.message.upsert({
