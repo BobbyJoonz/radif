@@ -1288,3 +1288,33 @@ html[lang="en"] .nums, html[lang="en"] td, html[lang="en"] th, html[lang="en"] .
 }
 .demobar-role:disabled { cursor: default; }
 .demobar-error { font-size: var(--t-micro); color: var(--critical); }
+
+/* ── the team section (owner manages collaboration here) ──────────────────── */
+.team { margin-top: var(--s6); padding-top: var(--s4); border-top: 1px solid var(--rule); }
+.team-h2 { font-size: var(--t-h2); font-weight: 700; margin-bottom: var(--s3); }
+.team-list { list-style: none; margin: 0 0 var(--s4); padding: 0; display: grid; }
+.team-row {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: var(--s3);
+  align-items: center; padding: 10px 0; border-bottom: 1px solid var(--rule-soft);
+}
+.team-who { display: grid; gap: 1px; min-width: 0; }
+.team-who b { font-size: var(--t-small); font-weight: 600; }
+.team-who small { font-size: var(--t-micro); color: var(--muted-foreground); }
+.team-role { font-size: var(--t-meta); color: var(--muted-foreground); }
+.team-note { font-size: var(--t-micro); color: var(--muted-foreground); }
+.team-remove { height: var(--h-control-sm); min-height: var(--h-control-sm); padding: 0 10px; font-size: var(--t-micro); }
+.team-invite { display: grid; grid-template-columns: minmax(0, 220px) 120px auto; gap: var(--s2); align-items: center; }
+.team-label { grid-column: 1 / -1; font-size: var(--t-micro); color: var(--muted-foreground); }
+.team-input {
+  height: var(--h-control); padding: 0 10px; min-width: 0;
+  background: var(--background); color: var(--foreground);
+  border: 1px solid var(--rule); border-radius: var(--r-1); font-size: var(--t-meta);
+}
+.team-submit { height: var(--h-control); min-height: var(--h-control); padding: 0 14px; font-size: var(--t-meta); }
+.team-link { display: grid; gap: 4px; margin-top: var(--s3); }
+.team-link span { font-size: var(--t-micro); color: var(--muted-foreground); }
+.team-ok { margin-top: var(--s2); font-size: var(--t-meta); color: var(--foreground); }
+.team-error { margin-top: var(--s2); font-size: var(--t-meta); color: var(--critical); }
+@media (max-width: 720px) {
+  .team-invite { grid-template-columns: 1fr; }
+}

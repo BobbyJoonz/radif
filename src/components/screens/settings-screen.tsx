@@ -1,5 +1,6 @@
 "use client";
 
+import { TeamPanel } from "@/components/settings/team-panel";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -435,6 +436,8 @@ export function SettingsScreen({
           ) : null}
         </div>
       )}
+      <TeamPanel locale={locale} />
+
       <Toast message={toast?.message ?? null} tone={toast?.tone} onClose={clear} />
     </div>
   );
