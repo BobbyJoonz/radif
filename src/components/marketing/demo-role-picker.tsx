@@ -32,6 +32,7 @@ export function DemoRolePicker({
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState<Persona | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [repair, setRepair] = useState<string | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
 
@@ -86,12 +87,21 @@ export function DemoRolePicker({
         return;
       }
       const response = await fetch(`/api/guest?role=${persona}`, { headers: { accept: "application/json" } });
-      if (!response.ok) throw new Error("guest failed");
       const payload = (await response.json()) as {
         ok: boolean;
-        data?: { email?: string; password?: string };
+        data?: { kind?: string; href?: string; email?: string; password?: string };
+        error?: { code?: string; message?: string; repairHref?: string };
       };
-      if (!payload.ok || !payload.data?.email || !payload.data.password) throw new Error("no account");
+
+      // The server is allowed to explain itself: a sleeping database or an
+      // outdated schema must not read as "the demo is broken".
+      if (!response.ok || !payload.ok) {
+        setBusy(null);
+        setError(payload.error?.message ?? errorLabel);
+        setRepair(payload.error?.repairHref ?? null);
+        return;
+      }
+      if (!payload.data?.email || !payload.data.password) throw new Error("no account");
 
       const signIn = await fetch("/api/auth/sign-in/email", {
         method: "POST",
@@ -105,6 +115,7 @@ export function DemoRolePicker({
     } catch {
       setBusy(null);
       setError(errorLabel);
+      setRepair(null);
     }
   }
 
@@ -146,6 +157,14 @@ export function DemoRolePicker({
           {error ? (
             <p role="alert" className="rolepicker-error">
               {error}
+              {repair ? (
+                <>
+                  {" "}
+                  <a className="rolepicker-repair" href={repair}>
+                    {locale === "fa" ? "ترمیم دیتابیس" : "Repair the database"}
+                  </a>
+                </>
+              ) : null}
             </p>
           ) : null}
         </div>

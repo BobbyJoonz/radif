@@ -50,6 +50,28 @@ export function LoginScreen({
 
   const loading = state === "loading";
 
+  /** One click: a cloned shop of the visitor's own (audit: no shared demo). */
+  async function startPersonalDemo() {
+    setBusy(true);
+    setError(null);
+    try {
+      const created = await fetch("/api/demo/start", { method: "POST" });
+      const payload = (await created.json()) as { ok: boolean; data?: { email: string; password: string } };
+      if (!created.ok || !payload.ok || !payload.data) throw new Error("create");
+      const signedIn = await fetch("/api/auth/sign-in/email", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email: payload.data.email, password: payload.data.password }),
+      });
+      if (!signedIn.ok) throw new Error("signin");
+      router.push(`/${locale}/today`);
+      router.refresh();
+    } catch {
+      setError(dict.login.personalDemoFailed);
+    } finally {
+      setBusy(false);
+    }
+  }
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     setBusy(true);
@@ -197,6 +219,15 @@ export function LoginScreen({
                 <span className={styles.accountEmail}>DEMO-ORD-1042</span>
                 <span className={styles.accountWho}>{dict.login.customerRole}</span>
               </Link>
+              <button
+                type="button"
+                className={styles.accountBtn}
+                onClick={startPersonalDemo}
+                disabled={busy}
+              >
+                <span className={styles.accountEmail}>{dict.login.personalDemo}</span>
+                <span className={styles.accountWho}>{dict.login.personalDemoHint}</span>
+              </button>
               <div className={styles.passRow}>
                 <span>
                   {dict.login.demoPassword}: <span className={styles.passValue}>{DEMO_PASSWORD}</span>
