@@ -189,6 +189,14 @@ export function LoginScreen({
                   </li>
                 ))}
               </ul>
+              <p className={styles.docNote}>{dict.login.customerDemo}</p>
+              <Link
+                href={`/${locale}/order/DEMO-ORD-1042`}
+                className={styles.accountBtn}
+              >
+                <span className={styles.accountEmail}>DEMO-ORD-1042</span>
+                <span className={styles.accountWho}>{dict.login.customerRole}</span>
+              </Link>
               <div className={styles.passRow}>
                 <span>
                   {dict.login.demoPassword}: <span className={styles.passValue}>{DEMO_PASSWORD}</span>

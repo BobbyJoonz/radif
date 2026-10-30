@@ -177,6 +177,7 @@ export const en: Dictionary = {
     rateLimited: "Too many attempts; try again in a minute.",
     demoTitle: "Demo accounts",
     demoNote: "These three exist only in demo mode, and share one password.",
+    customerDemo: "Customer view — one order by link",    customerRole: "Customer · no sign-in",
     demoPassword: "Demo password",
     fill: "Fill in",
     fillHint: "Pick an account to fill the email field.",

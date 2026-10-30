@@ -19,7 +19,8 @@ export function proxy(request: NextRequest) {
   // page that then redirects client-side: a real 307, no flash. The
   // authoritative check stays in the (app) layout, as the Next docs require.
   const appMatch = pathname.match(/^\/(fa|en)\/(today|inbox|orders|tasks|customers|import|settings|evaluation)(\/|$)/);
-  if (appMatch && !request.cookies.has("radif.session_token")) {
+  const hasSessionCookie = request.cookies.getAll().some((cookie) => /radif\.session_token/.test(cookie.name));
+  if (appMatch && !hasSessionCookie) {
     const url = request.nextUrl.clone();
     url.pathname = `/${appMatch[1]}/login`;
     url.search = `?next=${encodeURIComponent(pathname + search)}`;

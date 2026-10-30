@@ -1028,3 +1028,28 @@ button[aria-disabled="true"] {
    below the 24px target floor */
 .signup-head a { display: inline-flex; align-items: center; min-height: 32px; }
 .signup-alt a { display: inline-flex; align-items: center; min-height: 24px; padding: 0 2px; }
+
+/* ── customer order status (phase 4, first slice) ─────────────────────────── */
+.publicstatus { min-height: 100svh; display: grid; place-items: center; padding: var(--s6) var(--s4); }
+.publicstatus-inner {
+  width: min(560px, 100%); display: grid; gap: var(--s4);
+  border: 1px solid var(--rule); border-radius: var(--r-3); padding: var(--s6);
+  background: var(--surface);
+}
+.publicstatus-eyebrow { font-size: var(--t-meta); color: var(--primary); letter-spacing: .02em; }
+.publicstatus-title { font-size: var(--t-display); font-weight: 800; letter-spacing: -.01em; }
+.publicstatus-sub { font-size: var(--t-small); color: var(--muted-foreground); }
+.publicstatus-rows { display: grid; gap: 0; margin: var(--s2) 0 0; }
+.publicstatus-row {
+  display: flex; justify-content: space-between; gap: var(--s4);
+  padding: var(--s3) 0; border-bottom: 1px solid var(--rule-soft);
+  font-size: var(--t-body);
+}
+.publicstatus-row dt { color: var(--muted-foreground); margin: 0; }
+.publicstatus-row dd { margin: 0; font-weight: 600; text-align: end; }
+.publicstatus-row dd[data-tone="warn"] { color: var(--primary); }
+.publicstatus-row dd[data-tone="ok"] { color: var(--positive); }
+.publicstatus-items { display: grid; gap: var(--s2); padding-top: var(--s2); }
+.publicstatus-item { display: flex; justify-content: space-between; gap: var(--s4); font-size: var(--t-small); }
+.publicstatus-item.total { border-top: 1px solid var(--rule); padding-top: var(--s3); font-weight: 600; }
+.publicstatus-note { font-size: var(--t-meta); color: var(--muted-foreground); line-height: 1.7; }

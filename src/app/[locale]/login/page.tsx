@@ -38,7 +38,7 @@ export default async function LoginPage({
     console.error("[login] session lookup failed", error);
     return <SetupScreen missing={[]} reason="database" />;
   }
-  if (session) redirect(withLocale(locale, "/"));
+  if (session) redirect(withLocale(locale, "/today"));
 
   const next = typeof sp.next === "string" ? sp.next : null;
   const state = readDesignedState(sp.state);
