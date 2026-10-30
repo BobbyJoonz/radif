@@ -16,7 +16,7 @@ One DM in → one clear next action out.
 [![Prisma](https://img.shields.io/badge/Prisma-7.10-2D3748?logo=prisma)](https://www.prisma.io)
 [![Better Auth](https://img.shields.io/badge/Better%20Auth-1.7-FF852E)](https://better-auth.com)
 
-[![tests](https://img.shields.io/badge/tests-114%20passing-2ea043)](docs/GATES.md)
+[![tests](https://img.shields.io/badge/tests-151%20passing-2ea043)](docs/GATES.md)
 [![tsc](https://img.shields.io/badge/tsc-0%20errors-2ea043)](docs/GATES.md)
 [![lint](https://img.shields.io/badge/lint-0%20errors-2ea043)](docs/GATES.md)
 [![migrations](https://img.shields.io/badge/migrations-8%20additive-6e40c9)](prisma/migrations)
@@ -250,7 +250,7 @@ docs/                 CONTRACTS · PHASES · GATES · MOTION · DEMO · CONFORMA
 | `npx tsc --noEmit` | **0 errors** |
 | `pnpm lint` | **0 errors** · 9 warnings |
 | `pnpm build` | passes |
-| `pnpm test` | **114 tests passing** against a real PostgreSQL |
+| `pnpm test` | **151 tests passing** against a real PostgreSQL |
 | `prisma migrate reset --force` from scratch | **exit 0** · 8 migrations · **15** tenant keys |
 | Landing at 1440 / 390 px | 3 / 1 columns · **0** horizontal overflow · **0** console errors |
 | `prefers-reduced-motion: reduce` | plain text, no loops, **0** errors |
@@ -352,7 +352,7 @@ pnpm worker   # ترمینال دوم
 
 ## 📈 دروازه‌های کیفیت
 
-`tsc` ۰ خطا · `lint` ۰ خطا / ۹ هشدار · **۱۱۴ تست سبز** روی پستگرس واقعی ·
+`tsc` ۰ خطا · `lint` ۰ خطا / ۹ هشدار · **۱۵۱ تست سبز** روی پستگرس واقعی ·
 مایگریشن از صفر: ۸ مایگریشن و ۱۵ قید جداسازی · لندینگ در ۱۴۴۰/۳۹۰ بدون سرریز.
 
 شاهد هر یافته و **حالت‌های ردشده**: [`docs/GATES.md`](docs/GATES.md)

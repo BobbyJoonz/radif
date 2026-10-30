@@ -1268,3 +1268,23 @@ html[lang="en"] .nums, html[lang="en"] td, html[lang="en"] th, html[lang="en"] .
   .wdcase { grid-template-columns: 1fr; }
   .wdcase-end { justify-self: stretch; justify-content: space-between; }
 }
+
+/* ── the demo bar: switch role inside one sandbox ─────────────────────────── */
+.demobar {
+  display: flex; align-items: center; flex-wrap: wrap; gap: var(--s2);
+  padding: 6px var(--s5); border-bottom: 1px solid var(--rule-soft);
+  background: color-mix(in oklab, var(--surface) 55%, transparent);
+}
+.demobar-label { font-size: var(--t-micro); color: var(--muted-foreground); margin-inline-end: 4px; }
+.demobar-role {
+  height: var(--h-control-sm); padding: 0 12px;
+  border: 1px solid var(--rule); border-radius: var(--r-pill);
+  background: transparent; color: var(--muted-foreground);
+  font-size: var(--t-meta); cursor: pointer;
+}
+.demobar-role:hover { color: var(--foreground); border-color: var(--muted-foreground); }
+.demobar-role[data-current="true"] {
+  background: var(--primary); border-color: var(--primary); color: var(--primary-ink); font-weight: 600;
+}
+.demobar-role:disabled { cursor: default; }
+.demobar-error { font-size: var(--t-micro); color: var(--critical); }

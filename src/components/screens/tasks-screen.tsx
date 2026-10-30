@@ -25,6 +25,7 @@ import {
 } from "@/components/ui";
 import { dueLabel } from "./labels";
 import styles from "./screens.module.css";
+import { taskDetail, taskReason, taskTitle } from "@/i18n/task-copy";
 
 const STATUSES: TaskStatusValue[] = ["open", "in_progress", "waiting_customer", "done"];
 
@@ -173,7 +174,7 @@ export function TasksScreen({ locale, rows, showDone, userId, role, state, nowIS
                 return (
                   <article key={task.id} className={styles.taskRow}>
                     <div className={styles.taskWhat}>
-                      <h3 className={styles.taskTitle}>{task.title}</h3>
+                      <h3 className={styles.taskTitle}>{taskTitle(task, locale)}</h3>
                       <div className={styles.taskWho}>
                         {task.customerName ? <span>{task.customerName}</span> : null}
                         {task.orderRef && task.orderId ? (
@@ -188,10 +189,10 @@ export function TasksScreen({ locale, rows, showDone, userId, role, state, nowIS
                         ) : null}
                         <span>·</span>
                         <Mark shape="ring" tone="muted">
-                          {task.reasonText}
+                          {taskReason(task.reasonCode, task.reasonText, locale)}
                         </Mark>
                       </div>
-                      {task.detail ? <p className={styles.taskWhy}>{task.detail}</p> : null}
+                      {task.detail ? <p className={styles.taskWhy}>{taskDetail(task.type, task.detail, locale)}</p> : null}
                       <div className={styles.taskWho}>
                         <span>{dict.tasks.colAssignee}:</span>
                         <span>{task.assigneeName ?? dict.tasks.unassigned}</span>

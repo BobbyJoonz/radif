@@ -5,6 +5,7 @@ import type { Locale } from "@/i18n/config";
 import { BrandMark } from "@/components/brand/brand-mark";
 import { navKeysFor, type NavKey } from "@/lib/nav-matrix";
 import { UserMenu } from "@/components/shell/user-menu";
+import { DemoRoleSwitch } from "@/components/shell/demo-role-switch";
 import { MobileNav, TopNav, type NavItem } from "./nav";
 
 export type ShellSession = {
@@ -84,6 +85,8 @@ export function AppShell({
         </div>
         <TopNav items={items} locale={locale} dict={dict} />
       </header>
+
+      {session.demo ? <DemoRoleSwitch locale={locale} /> : null}
 
       <main id="main" className="shellmain">
         {children}

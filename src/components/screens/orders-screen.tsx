@@ -41,6 +41,7 @@ import {
 } from "@/components/ui";
 import { dueLabel, moneyText, whenText } from "./labels";
 import styles from "./screens.module.css";
+import { taskReason, taskTitle } from "@/i18n/task-copy";
 
 
 export type OrdersScreenProps = {
@@ -674,8 +675,8 @@ function OrderDetailPane({
             {tasks.map((task) => (
               <li key={task.id} className={styles.auditRow}>
                 <span className={styles.auditWhat}>
-                  <span className={styles.auditSummary}>{task.title}</span>
-                  <span className={styles.auditActor}>{task.reasonText}</span>
+                  <span className={styles.auditSummary}>{taskTitle(task, locale)}</span>
+                  <span className={styles.auditActor}>{taskReason(task.reasonCode, task.reasonText, locale)}</span>
                 </span>
                 <span className={styles.cellStackEnd}>
                   <StatusWord kind="task" value={task.status} dict={dict} />

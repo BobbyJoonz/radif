@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "../globals.css";
 import { directionOf, isLocale, locales, type Locale } from "@/i18n/config";
+import { latin } from "@/app/fonts";
 import { diagnoseDemo, ensureDemoReady } from "@/server/ensure";
 import { SetupScreen } from "@/components/brand/setup-screen";
 
@@ -60,7 +61,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
   const dir = directionOf(locale);
 
   return (
-    <html lang={locale} dir={dir} suppressHydrationWarning>
+    <html lang={locale} dir={dir} className={latin.variable} suppressHydrationWarning>
       <head>
         {/* The two weights the first screen needs; the rest swap in. */}
         <link rel="preload" href="/fonts/peyda/Peyda-Regular.woff2" as="font" type="font/woff2" crossOrigin="anonymous" />

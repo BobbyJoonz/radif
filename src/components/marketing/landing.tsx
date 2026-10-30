@@ -5,6 +5,7 @@ import { DemoRolePicker } from "@/components/marketing/demo-role-picker";
 import type { Locale } from "@/i18n/config";
 import { otherLocale } from "@/i18n/config";
 import { getMarketingCopy } from "@/i18n/marketing";
+import { formatNumber } from "@/i18n/format";
 
 /**
  * The public landing page.
@@ -76,7 +77,7 @@ export function Landing({ locale, signedIn }: { locale: Locale; signedIn: boolea
 
       <header className="mkt-head">
         <div className="mkt-head-inner">
-          <Link href={`/${locale}`} className="mkt-brand" aria-label="ردیف · Radif">
+          <Link href={`/${locale}`} className="mkt-brand" aria-label={locale === "fa" ? "ردیف · Radif" : "Radif"}>
             <BrandMark priority size="sm" />
           </Link>
           <span className="mkt-head-rule" aria-hidden="true" />
@@ -158,11 +159,11 @@ export function Landing({ locale, signedIn }: { locale: Locale; signedIn: boolea
               </div>
 
               <p className="mkt-specimen-counts">
-                <b>۹</b> {locale === "fa" ? "کار باز" : "open"}
+                <b>{formatNumber(9, locale)}</b> {locale === "fa" ? "کار باز" : "open"}
                 <span aria-hidden="true">·</span>
-                <b className="is-hot">۳</b> {locale === "fa" ? "عقب‌افتاده" : "overdue"}
+                <b className="is-hot">{formatNumber(3, locale)}</b> {locale === "fa" ? "عقب‌افتاده" : "overdue"}
                 <span aria-hidden="true">·</span>
-                <b>۱</b> {locale === "fa" ? "نیازمند بررسی" : "needs review"}
+                <b>{formatNumber(1, locale)}</b> {locale === "fa" ? "نیازمند بررسی" : "needs review"}
               </p>
 
               <ul className="mkt-rows">
@@ -329,7 +330,7 @@ export function Landing({ locale, signedIn }: { locale: Locale; signedIn: boolea
         </div>
         <div className="mkt-foot-base">
           <span>
-            © {new Date().getFullYear()} ردیف · Radif — {t.footer.rights}
+            © {new Date().getFullYear()} {locale === "fa" ? "ردیف · Radif" : "Radif"} — {t.footer.rights}
           </span>
           <span>{locale === "fa" ? "ساخته‌شده برای فروشندهٔ فارسی‌زبان" : "Built for Persian-speaking sellers"}</span>
         </div>
