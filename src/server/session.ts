@@ -87,7 +87,7 @@ export async function requireSession(): Promise<SessionContext> {
   return ctx;
 }
 
-export async function requireRole(role: "owner" | "operator"): Promise<SessionContext> {
+export async function requireRole(role: "owner" | "operator", purpose = "تأیید پرداخت و تنظیمات حساس"): Promise<SessionContext> {
   const ctx = await requireSession();
   if (role === "owner" && ctx.role !== "owner") {
     throw errors.forbidden("تأیید پرداخت و تنظیمات حساس فقط با نقش «مالک» انجام می‌شود.");

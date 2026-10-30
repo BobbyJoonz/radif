@@ -15,7 +15,7 @@ import { readJsonBody } from "../../_lib/request";
 export const dynamic = "force-dynamic";
 
 export const POST = handler(async (request: Request) => {
-  const ctx = await requireRole("owner");
+  const ctx = await requireRole("owner", "ورودی پیام‌ها");
   enforceRateLimit(`import:${ctx.user.id}`, env.RATE_LIMIT_IMPORT_PER_MIN);
 
   const body = importInputSchema.parse(await readJsonBody(request));
