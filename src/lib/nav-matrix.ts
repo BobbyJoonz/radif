@@ -22,6 +22,15 @@ export function canSee(role: ShopRole, key: NavKey): boolean {
   return navKeysFor(role).includes(key);
 }
 
+/**
+ * The account menu is navigation too. It used to hard-code settings and
+ * evaluation for every role, so an operator saw two doors that 403 behind them.
+ * This is the only list the menu may render.
+ */
+export function accountMenuKeys(role: ShopRole): NavKey[] {
+  return (["settings", "evaluation"] as NavKey[]).filter((key) => canSee(role, key));
+}
+
 /** Sections whose pages an operator must not reach even by typing the URL. */
 export function ownerOnlySections(): NavKey[] {
   return OWNER.filter((key) => !OPERATOR.includes(key));

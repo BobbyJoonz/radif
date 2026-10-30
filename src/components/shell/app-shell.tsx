@@ -68,6 +68,7 @@ export function AppShell({
           <UserMenu
             locale={locale}
             name={session.userName}
+            role={session.role}
             roleLabel={session.role === "owner" ? dict.shell.roleOwner : dict.shell.roleOperator}
             shop={session.shopName}
             labels={{

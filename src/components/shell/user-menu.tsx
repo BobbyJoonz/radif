@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import type { Locale } from "@/i18n/config";
+import { accountMenuKeys, type ShopRole } from "@/lib/nav-matrix";
 
 /**
  * The account menu: who you are, which role you hold, where the settings are,
@@ -17,12 +18,14 @@ import type { Locale } from "@/i18n/config";
 export function UserMenu({
   locale,
   name,
+  role,
   roleLabel,
   shop,
   labels,
 }: {
   locale: Locale;
   name: string;
+  role: ShopRole;
   roleLabel: string;
   shop: string;
   labels: {
@@ -118,18 +121,22 @@ export function UserMenu({
             <span>{shop}</span>
             <span className="usermenu-role">{roleLabel}</span>
           </div>
-          <Link
-            ref={firstItemRef}
-            role="menuitem"
-            className="usermenu-item"
-            href={`/${locale}/settings`}
-            onClick={() => setOpen(false)}
-          >
-            {labels.settings}
-          </Link>
-          <Link role="menuitem" className="usermenu-item" href={`/${locale}/evaluation`} onClick={() => setOpen(false)}>
-            {labels.evaluation}
-          </Link>
+          {accountMenuKeys(role).includes("settings") ? (
+            <Link
+              ref={firstItemRef}
+              role="menuitem"
+              className="usermenu-item"
+              href={`/${locale}/settings`}
+              onClick={() => setOpen(false)}
+            >
+              {labels.settings}
+            </Link>
+          ) : null}
+          {accountMenuKeys(role).includes("evaluation") ? (
+            <Link role="menuitem" className="usermenu-item" href={`/${locale}/evaluation`} onClick={() => setOpen(false)}>
+              {labels.evaluation}
+            </Link>
+          ) : null}
           <div className="usermenu-sep" role="separator" />
           <button type="button" role="menuitem" className="usermenu-item is-danger" onClick={signOut} disabled={busy}>
             {busy ? labels.signingOut : labels.signOut}
