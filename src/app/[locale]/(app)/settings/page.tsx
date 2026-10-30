@@ -63,6 +63,9 @@ export default async function SettingsPage({
             sla: { firstReplyMin: ctx.settings.slaFirstReplyMin, shipMin: ctx.settings.slaShipMin },
             priceFreshnessMin: ctx.settings.priceFreshnessMin,
             postingPaused: ctx.settings.postingPaused,
+            shippingPaused: false,
+            pricing: { inputRatePerMTok: null, outputRatePerMTok: null, readAt: null },
+            catalogue: [],
             connections: [],
             modes: {
               appMode: "demo",

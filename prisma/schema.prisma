@@ -122,6 +122,13 @@ model TenantSettings {
   slaShipMin        Int      @default(2880) // 48h after confirmation
   priceFreshnessMin Int      @default(1440)
   postingPaused     Boolean  @default(false)
+  // Brief §13: stopping shipping is a different decision from stopping new
+  // orders. Replies read both flags; neither is inferred from the other.
+  shippingPaused    Boolean  @default(false)
+  // Brief §15: an editable, dated rate. Null means 'not set', never zero.
+  inputRatePerMTok  Decimal? @db.Decimal(12, 6)
+  outputRatePerMTok Decimal? @db.Decimal(12, 6)
+  ratesReadAt       DateTime?
   demoMode          Boolean  @default(true)
   updatedAt         DateTime @updatedAt
   tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)

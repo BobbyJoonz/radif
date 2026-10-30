@@ -314,6 +314,25 @@ export type SettingsDTO = {
   sla: { firstReplyMin: number; shipMin: number };
   priceFreshnessMin: number;
   postingPaused: boolean;
+  shippingPaused: boolean;
+  /** USD per 1M tokens; null = never set. readAt is when the price was read. */
+  pricing: {
+    inputRatePerMTok: string | null;
+    outputRatePerMTok: string | null;
+    readAt: string | null;
+  };
+  /** The small catalogue with the freshness of each price (brief §5). */
+  catalogue: {
+    id: string;
+    titleFa: string;
+    titleEn: string;
+    priceMinor: string;
+    currency: string;
+    stockQty: number | null;
+    confirmedAt: string;
+    validUntil: string;
+    fresh: boolean;
+  }[];
   connections: {
     id: string;
     channel: string;

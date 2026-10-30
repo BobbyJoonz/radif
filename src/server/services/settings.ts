@@ -39,6 +39,14 @@ export const settingsPatchSchema = z
       .optional(),
     priceFreshnessMin: z.number().int().min(1).max(43_200).optional(),
     postingPaused: z.boolean().optional(),
+    shippingPaused: z.boolean().optional(),
+    pricing: z
+      .object({
+        inputRatePerMTok: z.number().min(0).max(1_000).nullable(),
+        outputRatePerMTok: z.number().min(0).max(1_000).nullable(),
+      })
+      .strict()
+      .optional(),
   })
   .strict();
 
@@ -51,10 +59,27 @@ function connectionIsLive(channel: string, status: string): boolean {
 }
 
 export async function getSettings(ctx: SessionContext): Promise<SettingsDTO> {
-  const [settings, connections] = await Promise.all([
+  const [settings, connections, products] = await Promise.all([
     prisma.tenantSettings.findUnique({ where: { tenantId: ctx.tenant.id } }),
     getConnections(ctx),
+    prisma.product.findMany({
+      where: { tenantId: ctx.tenant.id, active: true },
+      select: {
+        id: true,
+        titleFa: true,
+        titleEn: true,
+        priceMinor: true,
+        currency: true,
+        stockQty: true,
+        infoConfirmedAt: true,
+        infoValidUntil: true,
+      },
+      orderBy: [{ infoConfirmedAt: "asc" }],
+      take: 20,
+    }),
   ]);
+  const now = Date.now();
+  const freshnessMs = (settings?.priceFreshnessMin ?? ctx.settings.priceFreshnessMin) * 60_000;
 
   return {
     tenant: {
@@ -75,6 +100,27 @@ export async function getSettings(ctx: SessionContext): Promise<SettingsDTO> {
     },
     priceFreshnessMin: settings?.priceFreshnessMin ?? ctx.settings.priceFreshnessMin,
     postingPaused: settings?.postingPaused ?? ctx.settings.postingPaused,
+    shippingPaused: settings?.shippingPaused ?? false,
+    pricing: {
+      inputRatePerMTok: settings?.inputRatePerMTok?.toString() ?? null,
+      outputRatePerMTok: settings?.outputRatePerMTok?.toString() ?? null,
+      readAt: settings?.ratesReadAt?.toISOString() ?? null,
+    },
+    catalogue: products.map((product) => ({
+      id: product.id,
+      titleFa: product.titleFa,
+      titleEn: product.titleEn,
+      priceMinor: product.priceMinor.toString(),
+      currency: product.currency,
+      stockQty: product.stockQty,
+      confirmedAt: product.infoConfirmedAt.toISOString(),
+      validUntil: product.infoValidUntil.toISOString(),
+      // Fresh means both: inside the configured window *and* not past the
+      // recorded validity. A price that outlived its own confirmation is stale.
+      fresh:
+        product.infoValidUntil.getTime() > now &&
+        now - product.infoConfirmedAt.getTime() <= freshnessMs,
+    })),
     connections,
     modes: {
       appMode: env.APP_MODE,
@@ -109,6 +155,14 @@ export async function updateSettings(ctx: SessionContext, patch: SettingsPatch):
       ...(patch.sla ? { slaFirstReplyMin: patch.sla.firstReplyMin, slaShipMin: patch.sla.shipMin } : {}),
       ...(patch.priceFreshnessMin !== undefined ? { priceFreshnessMin: patch.priceFreshnessMin } : {}),
       ...(patch.postingPaused !== undefined ? { postingPaused: patch.postingPaused } : {}),
+      ...(patch.shippingPaused !== undefined ? { shippingPaused: patch.shippingPaused } : {}),
+      ...(patch.pricing
+        ? {
+            inputRatePerMTok: patch.pricing.inputRatePerMTok,
+            outputRatePerMTok: patch.pricing.outputRatePerMTok,
+            ratesReadAt: new Date(),
+          }
+        : {}),
     };
 
     await tx.tenantSettings.upsert({
@@ -121,6 +175,7 @@ export async function updateSettings(ctx: SessionContext, patch: SettingsPatch):
         slaShipMin: patch.sla?.shipMin ?? ctx.settings.slaShipMin,
         priceFreshnessMin: patch.priceFreshnessMin ?? ctx.settings.priceFreshnessMin,
         postingPaused: patch.postingPaused ?? ctx.settings.postingPaused,
+        shippingPaused: patch.shippingPaused ?? false,
       },
       update: data,
     });
@@ -142,6 +197,7 @@ export async function updateSettings(ctx: SessionContext, patch: SettingsPatch):
                 slaShipMin: before.slaShipMin,
                 priceFreshnessMin: before.priceFreshnessMin,
                 postingPaused: before.postingPaused,
+                shippingPaused: before.shippingPaused,
               },
             }
           : {}),
@@ -150,6 +206,8 @@ export async function updateSettings(ctx: SessionContext, patch: SettingsPatch):
           ...(patch.sla ? { slaFirstReplyMin: patch.sla.firstReplyMin, slaShipMin: patch.sla.shipMin } : {}),
           ...(patch.priceFreshnessMin !== undefined ? { priceFreshnessMin: patch.priceFreshnessMin } : {}),
           ...(patch.postingPaused !== undefined ? { postingPaused: patch.postingPaused } : {}),
+          ...(patch.shippingPaused !== undefined ? { shippingPaused: patch.shippingPaused } : {}),
+          ...(patch.pricing ? { inputRatePerMTok: patch.pricing.inputRatePerMTok, outputRatePerMTok: patch.pricing.outputRatePerMTok } : {}),
         },
       },
     });
