@@ -24,8 +24,9 @@ export function SetupScreen({ missing, reason = "env" }: { missing: string[]; re
         </p>
       ) : null}
       <p className="brandscreen-body" lang="en" dir="ltr">
-        This deployment is missing required environment variables. Set them in your
-        hosting project (Vercel → Settings → Environment Variables), then redeploy.
+        {reason === "database"
+          ? "The database is reachable but this deployment has no schema yet. Use the button below, or run prisma migrate deploy and the seed once."
+          : "This deployment is missing required environment variables. Set them in your hosting project, then redeploy."}
       </p>
       <ul className="setup-missing">
         {missing.map((name) => (

@@ -1,6 +1,6 @@
 ﻿import { applyMigrations, bootstrapDemo, schemaExists } from "@/server/bootstrap";
 import { prisma } from "@/server/db";
-import { isDemo } from "@/lib/env";
+import { isDemo, missingRequiredEnv } from "@/lib/env";
 
 /**
  * Self-healing demo provisioning.
@@ -37,4 +37,17 @@ export async function ensureDemoReady(): Promise<State> {
     return "skipped" as State;
   });
   return inflight;
+}
+
+/** A truthful state for the gate: can this deployment render the app, and if
+ *  not, is the missing piece the environment or the database? */
+export async function diagnoseDemo(): Promise<{ ok: boolean; reason?: "env" | "database"; missing: string[] }> {
+  const missing = missingRequiredEnv();
+  if (missing.length > 0) return { ok: false, reason: "env", missing };
+  try {
+    await ensureDemoReady();
+    return { ok: true, missing: [] };
+  } catch {
+    return { ok: false, reason: "database", missing: [] };
+  }
 }

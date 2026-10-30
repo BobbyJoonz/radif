@@ -1,7 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import "../globals.css";
 import { directionOf, isLocale, locales, type Locale } from "@/i18n/config";
-import { ensureDemoReady } from "@/server/ensure";
+import { diagnoseDemo, ensureDemoReady } from "@/server/ensure";
+import { SetupScreen } from "@/components/brand/setup-screen";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.BETTER_AUTH_URL ?? "http://localhost:3000"),
@@ -55,7 +56,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
   const locale: Locale = isLocale(raw) ? raw : "fa";
   // Every locale route — /fa/login included — makes a demo deployment provision
   // itself before it renders. Idempotent, and a no-op outside demo mode.
-  await ensureDemoReady();
+  const gate = await diagnoseDemo();
   const dir = directionOf(locale);
 
   return (
@@ -73,7 +74,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
               : "This app needs JavaScript to work."}
           </div>
         </noscript>
-        {children}
+        {gate.ok ? children : <SetupScreen missing={gate.missing} reason={gate.reason ?? "env"} />}
       </body>
     </html>
   );
