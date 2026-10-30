@@ -492,7 +492,7 @@ async function persist(input: PersistInput): Promise<void> {
 
     if (plan.draft) {
 
-      await createDraftOrder(tx, {
+      const draftOrderId = await createDraftOrder(tx, {
 
         tenantId,
 
@@ -818,12 +818,12 @@ async function createDraftOrder(
     currency: string;
     now: Date;
   },
-): Promise<void> {
+): Promise<string | null> {
   const conversation = await tx.conversation.findFirst({
     where: { id: input.conversationId, tenantId: input.tenantId },
     select: { customerId: true },
   });
-  if (!conversation) return;
+  if (!conversation) return null;
 
   const openDraft = await tx.order.findFirst({
     where: {
@@ -833,7 +833,7 @@ async function createDraftOrder(
     },
     select: { id: true },
   });
-  if (openDraft) return;
+  if (openDraft) return openDraft.id;
 
   const order = await tx.order.create({
     data: {
@@ -859,4 +859,6 @@ async function createDraftOrder(
       after: { messageId: input.messageId, intent: input.reason } as Prisma.InputJsonValue,
     },
   });
+
+  return order.id;
 }
