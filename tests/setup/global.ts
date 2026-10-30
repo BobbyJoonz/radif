@@ -32,7 +32,7 @@ export default async function globalSetup(): Promise<void> {
   try {
     execFileSync(
       process.execPath,
-      [path.resolve(process.cwd(), "node_modules/prisma/build/index.js"), "migrate", "deploy"],
+      [path.resolve(process.cwd(), "node_modules/prisma/build/index.js"), "migrate", "reset", "--force"],
       {
         env: { ...process.env, DATABASE_URL: testUrl },
         stdio: "pipe",
