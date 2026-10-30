@@ -638,9 +638,19 @@ export async function previewReply(ctx: SessionContext, orderId: string): Promis
     if (scan.hits.some((hit) => hit.intent === "address_change")) addressChangeRequested = true;
   }
 
+  // The audit's P0: this read ignored the human decision, so a *rejected*
+  // address proposal was treated as the customer's stated address and the reply
+  // flipped from "address_needed" to "shipping_preparing" — a false statement to
+  // the customer. Only an accepted (or human-corrected) suggestion is operational
+  // truth; a proposal awaiting review is not.
   const addressSuggestion = await prisma.suggestion.findFirst({
-    where: { tenantId, orderId: order.id, field: "order.address" },
-    orderBy: { createdAt: "desc" },
+    where: {
+      tenantId,
+      orderId: order.id,
+      field: "order.address",
+      reviewState: { in: ["accepted", "corrected"] },
+    },
+    orderBy: { reviewedAt: "desc" },
     select: { proposedValue: true },
   });
   const statedAddress = addressSuggestion ? readProposedValue(addressSuggestion.proposedValue).value : null;
