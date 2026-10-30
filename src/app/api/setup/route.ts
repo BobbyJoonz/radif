@@ -27,14 +27,29 @@ async function run() {
     );
   }
 
-  if (await schemaExists()) {
+  const hasSchema = await schemaExists();
+  if (hasSchema) {
+    // A deploy can land with the tables already created (a build step ran
+    // `prisma migrate deploy`) but the demo shop never seeded. That is a
+    // half-provisioned deployment, not a ready one.
     const tenants = await prisma.tenant.count();
-    return NextResponse.json(
-      { ok: true, data: { schema: "ok", tenants, note: "already provisioned — nothing to do" } },
-      { status: 409 },
-    );
+    if (tenants > 0) {
+      return NextResponse.json({
+        ok: true,
+        data: { state: "ready", tenants, note: "already provisioned; nothing to do" },
+      });
+    }
+    const demo = await bootstrapDemo();
+    return NextResponse.json({
+      ok: true,
+      data: {
+        state: "seeded",
+        tenants: await prisma.tenant.count(),
+        demo,
+        signIn: { email: "maryam@toranj.demo", password: "radif-demo-1405" },
+      },
+    });
   }
-
   const { applied } = await applyMigrations();
   const hasTenant = (await prisma.tenant.count()) > 0;
   const created = hasTenant ? null : await bootstrapDemo();

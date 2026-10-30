@@ -794,3 +794,79 @@ button[aria-disabled="true"] {
   .mkt-band h2 { font-size: 24px; }
   .mkt-foot-base { flex-direction: column; }
 }
+
+/* ── account menu ─────────────────────────────────────────────────────────── */
+.usermenu { position: relative; }
+.usermenu-trigger {
+  display: inline-flex; align-items: center; gap: var(--s2);
+  min-height: 36px; padding: 3px 8px 3px 4px;
+  background: transparent; border: 1px solid transparent; border-radius: var(--r-2);
+  color: var(--foreground); cursor: pointer;
+}
+.usermenu-trigger:hover { background: var(--surface); border-color: var(--rule); }
+.usermenu-trigger:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+.usermenu-initial {
+  width: 24px; height: 24px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--surface-raised); border: 1px solid var(--border);
+  font-size: 11px; font-weight: 700; color: var(--muted-foreground);
+}
+.usermenu-id { display: grid; gap: 0; text-align: start; line-height: 1.25; }
+.usermenu-id b { font-size: var(--t-small); font-weight: 600; }
+.usermenu-id small { font-size: var(--t-micro); color: var(--muted-foreground); }
+.usermenu-caret {
+  width: 0; height: 0; margin-inline-start: 2px;
+  border-inline: 4px solid transparent; border-top: 5px solid var(--muted-foreground);
+  transition: transform var(--dur-1) var(--ease-out);
+}
+.usermenu-caret.is-open { transform: rotate(180deg); }
+.usermenu-pop {
+  position: absolute; inset-inline-end: 0; top: calc(100% + 6px); z-index: 50;
+  min-width: 232px; padding: var(--s2);
+  background: var(--surface-raised); border: 1px solid var(--border);
+  border-radius: var(--r-2); box-shadow: var(--shadow-sheet);
+  display: grid; gap: 2px;
+}
+.usermenu-head {
+  display: grid; gap: 1px; padding: var(--s3);
+  border-bottom: 1px solid var(--rule-soft); margin-bottom: var(--s2);
+}
+.usermenu-head b { font-size: var(--t-small); font-weight: 600; }
+.usermenu-head span { font-size: var(--t-micro); color: var(--muted-foreground); }
+.usermenu-role { color: var(--foreground) !important; }
+.usermenu-item {
+  display: flex; align-items: center; min-height: 38px; padding: 0 var(--s3);
+  border: 0; border-radius: var(--r-1); background: transparent;
+  font: inherit; font-size: var(--t-small); color: var(--foreground); text-align: start;
+  cursor: pointer; width: 100%;
+}
+.usermenu-item:hover { background: color-mix(in oklab, var(--surface) 70%, transparent); }
+.usermenu-item:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+.usermenu-item.is-danger { color: var(--critical); }
+.usermenu-sep { height: 1px; background: var(--rule-soft); margin: var(--s2) 0; }
+.usermenu-error { padding: 0 var(--s3) var(--s2); font-size: var(--t-micro); color: var(--critical); }
+
+/* ── standard list rhythm ───────────────────────────────────────────────────
+   Every list in the product shares one row rhythm and one type ramp, so the
+   inbox queue, the task list and the sheet stop looking like three products:
+     • row 64px (queue) / 44px (dense lists), 12px inline padding
+     • name 13/600, preview 12 muted, meta 11, numbers tabular
+     • one hairline between rows, one 2px accent bar for the selected row */
+.queue { display: flex; flex-direction: column; }
+.qrow { min-height: 64px; padding: 10px 12px; gap: 3px; }
+.qrowTop { align-items: center; gap: var(--s2); }
+.qrowName { font-size: 13px; font-weight: 600; line-height: 1.4; }
+.qrowTime { font-size: 11px; color: var(--muted-foreground); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.qrowPreview { font-size: 12px; line-height: 1.55; color: var(--muted-foreground); }
+.qrowMeta { font-size: 11px; gap: 6px; flex-wrap: wrap; }
+.queueHead { padding: var(--s4) 12px var(--s2); }
+.queueFilters { padding: 0 12px var(--s3); }
+.fieldRowBtn { min-height: 44px; padding: 8px 12px; }
+.fieldLabel { font-size: 11px; }
+.fieldValue { font-size: 13px; line-height: 1.6; }
+.taskList li { min-height: 44px; padding: 8px 0; }
+.paneState { place-content: center; text-align: center; padding: var(--s6) var(--s4); }
+@media (max-width: 900px) {
+  .usermenu-id { display: none; }
+  .usermenu-trigger { min-height: 32px; }
+}

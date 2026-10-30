@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import type { Dictionary } from "@/i18n";
 import type { Locale } from "@/i18n/config";
 import { BrandMark } from "@/components/brand/brand-mark";
+import { UserMenu } from "@/components/shell/user-menu";
 import { MobileNav, TopNav, type NavItem } from "./nav";
 
 export type ShellSession = {
@@ -62,10 +63,21 @@ export function AppShell({
               {dict.shell.demo}
             </span>
           ) : null}
-          <span className="account">
-            <span className="account-name">{session.userName}</span>
-            <span className="account-role">{session.role === "owner" ? dict.shell.roleOwner : dict.shell.roleOperator}</span>
-          </span>
+          <UserMenu
+            locale={locale}
+            name={session.userName}
+            roleLabel={session.role === "owner" ? dict.shell.roleOwner : dict.shell.roleOperator}
+            shop={session.shopName}
+            labels={{
+              account: dict.shell.account,
+              settings: dict.nav.settings,
+              evaluation: dict.nav.evaluation,
+              signOut: dict.shell.signOut,
+              signingOut: locale === "fa" ? "در حال خروج…" : "Signing out…",
+              signOutError: locale === "fa" ? "خروج انجام نشد؛ دوباره تلاش کنید." : "Sign-out failed; try again.",
+              menu: dict.shell.account,
+            }}
+          />
         </div>
         <TopNav items={items} locale={locale} dict={dict} />
       </header>
