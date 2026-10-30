@@ -1001,3 +1001,25 @@ button[aria-disabled="true"] {
   .mkt-states { flex-direction: column; }
   .mkt-state + .mkt-state { border-inline-start: 0; border-top: 1px solid var(--rule-soft); }
 }
+
+/* header cta balance + a tighter counts line */
+.mkt-head .marketing-cta {
+  min-height: 40px; padding: 0 var(--s5); font-size: var(--t-small);
+  box-shadow: 0 1px 0 rgba(255, 133, 46, .35);
+}
+.mkt-specimen-counts { gap: 4px; }
+.mkt-specimen-counts span { margin: 0 2px; }
+
+/* on a phone a box inside a box inside a box is noise: the thread becomes a
+   quoted block with a rule, not a card, and the states flatten */
+@media (max-width: 720px) {
+  .mkt-thread {
+    background: transparent; border: 0; border-radius: 0;
+    border-inline-start: 2px solid var(--rule);
+    margin: 0 16px 10px; padding: 2px 12px;
+  }
+  .mkt-states { flex-direction: row; flex-wrap: wrap; }
+  .mkt-state { flex: 1 1 100%; padding: 8px 14px; }
+  .mkt-state + .mkt-state { border-inline-start: 0; border-top: 1px solid var(--rule-soft); }
+  .mkt-head .marketing-cta { min-height: 38px; padding: 0 var(--s4); }
+}

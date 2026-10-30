@@ -6,6 +6,7 @@ import { AppShell } from "@/components/shell/app-shell";
 import { getDictionary } from "@/i18n";
 import { isLocale, withLocale, type Locale } from "@/i18n/config";
 import { missingRequiredEnv } from "@/lib/env";
+import { ensureDemoReady } from "@/server/ensure";
 import { getSessionContext } from "@/server/session";
 import { getLastSync, getShellCounts } from "@/server/services/shell";
 
