@@ -1,3 +1,4 @@
+import { MotionMagnetic, MotionReveal, MotionShimmer, MotionStagger, MotionTilt, MotionTitle } from "@/components/motion/reveal";
 import Link from "next/link";
 import { BrandMark } from "@/components/brand/brand-mark";
 import { DemoRolePicker } from "@/components/marketing/demo-role-picker";
@@ -127,12 +128,14 @@ export function Landing({ locale, signedIn }: { locale: Locale; signedIn: boolea
       <main id="main">
         <section className="mkt-hero">
           <div className="mkt-hero-copy">
-            <h1 className="mkt-h1">{t.hero.title}</h1>
+            <MotionTitle as="h1" text={t.hero.title} className="mkt-h1" preset="fade-in-blur" />
             <p className="mkt-lede">{t.hero.lede}</p>
             <div className="mkt-ctas">
-              <Link href={signupHref} className="marketing-cta is-primary">
-                {t.cta.primary}
-              </Link>
+              <MotionMagnetic>
+                <Link href={signupHref} className="marketing-cta is-primary">
+                  {t.cta.primary}
+                </Link>
+              </MotionMagnetic>
               <DemoRolePicker
                 locale={locale}
                 label={t.cta.guest}
@@ -144,12 +147,13 @@ export function Landing({ locale, signedIn }: { locale: Locale; signedIn: boolea
           </div>
 
           <div className="mkt-specimen-wrap">
+            <MotionTilt rotationFactor={5}>
             <aside className="mkt-specimen" aria-label={t.specimen.title}>
               <div className="mkt-specimen-head">
                 <span className="mkt-specimen-title">{t.specimen.title}</span>
                 <span className="mkt-specimen-live">
                   <i aria-hidden="true" />
-                  {locale === "fa" ? "زنده" : "live"}
+                  <MotionShimmer as="span" text={locale === "fa" ? "زنده" : "live"} />
                 </span>
               </div>
 
@@ -223,6 +227,7 @@ export function Landing({ locale, signedIn }: { locale: Locale; signedIn: boolea
 
               <p className="mkt-specimen-note">{t.specimen.note}</p>
             </aside>
+            </MotionTilt>
           </div>
         </section>
 
@@ -231,14 +236,14 @@ export function Landing({ locale, signedIn }: { locale: Locale; signedIn: boolea
             <h2 id="value-title">{t.value.title}</h2>
             <p>{t.value.lede}</p>
           </div>
-          <div className="mkt-values">
+          <MotionStagger className="mkt-values" preset="blur-slide">
             {t.value.items.map((item) => (
               <article key={item.title} className="mkt-value">
                 <h3>{item.title}</h3>
                 <p>{item.body}</p>
               </article>
             ))}
-          </div>
+          </MotionStagger>
         </section>
 
         <section className="mkt-section" id="how" aria-labelledby="how-title">
@@ -258,8 +263,10 @@ export function Landing({ locale, signedIn }: { locale: Locale; signedIn: boolea
         </section>
 
         <section className="mkt-numbers" aria-label={t.numbers.note}>
-          <p className="mkt-numbers-line">{t.numbers.line}</p>
-          <p className="mkt-numbers-note">{t.numbers.note}</p>
+          <MotionReveal>
+            <p className="mkt-numbers-line">{t.numbers.line}</p>
+            <p className="mkt-numbers-note">{t.numbers.note}</p>
+          </MotionReveal>
         </section>
 
         <section className="mkt-section" id="faq" aria-labelledby="faq-title">

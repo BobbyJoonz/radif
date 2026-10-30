@@ -1203,3 +1203,10 @@ button[aria-disabled="true"] {
 .setup-primary span { font-size: 10px; font-weight: 500; opacity: .8; }
 .setup-hint { margin-top: var(--s4); font-size: var(--t-micro); }
 .setup-hint span { display: block; margin-top: 2px; opacity: .85; }
+
+
+/* Motion must never be the reason content is invisible: with scripting off, every
+   reveal resolves to its final state. */
+@media (scripting: none) {
+  .mkt-h1 span, [data-motion] { opacity: 1 !important; filter: none !important; transform: none !important; }
+}
