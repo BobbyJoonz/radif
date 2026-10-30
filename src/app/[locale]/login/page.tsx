@@ -28,7 +28,7 @@ export default async function LoginPage({
   const sp = await searchParams;
 
   const missing = missingRequiredEnv();
-  if (missing.length > 0) return <SetupScreen missing={missing} />;
+  if (missing.length > 0) return <SetupScreen missing={missing} reason="env" />;
 
   // Already signed in? Go to the queue rather than showing a login form.
   let session = null;
@@ -36,7 +36,7 @@ export default async function LoginPage({
     session = await getSessionContext();
   } catch (error) {
     console.error("[login] session lookup failed", error);
-    return <SetupScreen missing={[]} reason="database" />;
+    return <SetupScreen reason="unreachable" />;
   }
   if (session) redirect(withLocale(locale, "/today"));
 

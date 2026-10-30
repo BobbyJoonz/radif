@@ -1189,3 +1189,17 @@ button[aria-disabled="true"] {
 @media (max-width: 480px) {
   main table { display: block; overflow-x: auto; max-width: 100%; -webkit-overflow-scrolling: touch; }
 }
+
+/* setup screen: one primary action, one hairline action, no empty boxes */
+.setup-primary {
+  display: inline-flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 1px; min-height: 52px; padding: 8px 22px;
+  background: var(--primary); color: var(--primary-ink);
+  border: 1px solid var(--primary); border-radius: var(--r-2);
+  font-size: var(--t-small); font-weight: 700; line-height: 1.35;
+  text-align: center;
+}
+.setup-primary:hover { background: #ffa45e; border-color: #ffa45e; }
+.setup-primary span { font-size: 10px; font-weight: 500; opacity: .8; }
+.setup-hint { margin-top: var(--s4); font-size: var(--t-micro); }
+.setup-hint span { display: block; margin-top: 2px; opacity: .85; }
