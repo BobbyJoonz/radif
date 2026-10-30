@@ -86,10 +86,12 @@ async function upsertConnection(id: string, tenantId: string, accountRef: string
 
 async function upsertPeople(tenantId: string, connectionId: string, people: Person[], messageBase: number) {
   for (const person of people) {
+    const phone = person.phone ?? demoPhone(people.indexOf(person) + 3);
+    const address = demoAddress(people.indexOf(person) + 5);
     await prisma.customer.upsert({
       where: { id: person.id },
-      update: { displayName: person.name },
-      create: { id: person.id, tenantId, displayName: person.name, phone: person.phone ?? null, phoneVerifiedAt: person.phone ? daysAgo(20) : null },
+      update: { displayName: person.name, phone, notes: address },
+      create: { id: person.id, tenantId, displayName: person.name, phone, phoneVerifiedAt: daysAgo(20), notes: address },
     });
     await prisma.customerIdentity.upsert({
       where: { id: `id_${person.id}` },
@@ -140,6 +142,25 @@ async function upsertPeople(tenantId: string, connectionId: string, people: Pers
  */
 const BULK_CUSTOMERS = 50;
 
+/** Iranian mobile prefixes that are actually in use, so the numbers look real. */
+const MOBILE_PREFIXES = ["912", "935", "921", "930", "901", "903", "919", "938"];
+const CITIES = ["تهران", "کرج", "اصفهان", "شیراز", "مشهد", "تبریز", "رشت", "یزد", "اهواز", "قم"];
+
+function demoPhone(i: number): string {
+  const prefix = MOBILE_PREFIXES[i % MOBILE_PREFIXES.length];
+  const rest = String(100_0000 + ((i * 7919) % 8_999_999)).padStart(7, "0");
+  return `+98${prefix}${rest}`;
+}
+
+function demoHandle(i: number): string {
+  const first = ["negar", "shirin", "hossein", "elham", "reza", "mina", "amir", "sara", "kian", "parisa"];
+  return `${first[i % first.length]}.${String(i + 1).padStart(2, "0")}`;
+}
+
+function demoAddress(i: number): string {
+  return `${CITIES[i % CITIES.length]}، خیابان نمونهٔ ${i % 20 + 1}، پلاک ${i % 90 + 10}`;
+}
+
 const bulkTexts = [
   "سلام، شال ترنج موجوده؟",
   "واریز کردم، فیش رو می‌فرستید؟",
@@ -162,16 +183,18 @@ async function seedBulkDemo(): Promise<void> {
     const messageId = `bulk_msg_${n}`;
     const at = new Date(base - (i + 1) * 37 * 60_000);
     const name = `مشتری نمونهٔ ${n}`;
-    const handle = `demo.customer.${n}`;
 
+    const phone = demoPhone(i);
+    const handle = demoHandle(i);
+    const address = demoAddress(i);
     await prisma.customer.upsert({
       where: { id: customerId },
-      update: {},
-      create: { id: customerId, tenantId: T, displayName: name },
+      update: { phone, notes: address },
+      create: { id: customerId, tenantId: T, displayName: name, phone, phoneVerifiedAt: at, notes: address },
     });
     await prisma.customerIdentity.upsert({
       where: { id: `bulk_id_${n}` },
-      update: {},
+      update: { externalRef: handle },
       create: {
         id: `bulk_id_${n}`,
         tenantId: T,

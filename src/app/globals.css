@@ -1120,3 +1120,66 @@ button[aria-disabled="true"] {
   border-radius: var(--r-pill) !important;
   padding-inline: 10px;
 }
+
+/* ═══════════════ component scale (the only sizes allowed) ═══════════════
+   Think of this as the Figma library: three control heights, one chip height,
+   one radius family, one type ramp. Anything outside this list is a bug.
+     control-sm 28 · control 36 · cta 44        radius 6 / 10 / 14 / pill
+     chip 28       tag 24
+   Type: 11 micro (machine) · 12 meta · 13 small · 14 body · 16 body-lg
+         20 h2 · 28 h1                                                     */
+:root {
+  --h-control-sm: 28px;
+  --h-control: 36px;
+  --h-cta: 44px;
+  --h-chip: 28px;
+  --h-tag: 24px;
+  --f-micro: 11px;
+  --f-meta: 12px;
+  --f-small: 13px;
+  --f-body: 14px;
+  --f-body-lg: 16px;
+  --f-h2: 20px;
+}
+
+/* filter chips: one geometry, one selected state */
+.filter,
+[class*="queueFilters"] a,
+[class*="queueFilters"] button,
+[class*="Segmented"] a,
+[class*="Segmented"] button {
+  display: inline-flex; align-items: center; justify-content: center;
+  height: var(--h-chip); min-height: var(--h-chip);
+  padding: 0 12px; gap: 6px;
+  border: 1px solid var(--border); border-radius: var(--r-pill);
+  background: transparent; color: var(--muted-foreground);
+  font-size: var(--f-meta); font-weight: 500; line-height: 1;
+  white-space: nowrap; cursor: pointer;
+  transition: background-color var(--dur-1) var(--ease-out), border-color var(--dur-1) var(--ease-out), color var(--dur-1) var(--ease-out);
+}
+.filter:hover,
+[class*="queueFilters"] a:hover,
+[class*="queueFilters"] button:hover { color: var(--foreground); border-color: var(--muted-foreground); }
+.filter[aria-current="true"],
+.filter[data-active="true"],
+[class*="queueFilters"] [aria-current="true"],
+[class*="queueFilters"] [data-active="true"],
+[class*="queueFilters"] [aria-pressed="true"] {
+  background: var(--surface-raised) !important;
+  border-color: var(--border) !important;
+  color: var(--foreground) !important;
+}
+.filterCount {
+  font-size: var(--f-micro); font-variant-numeric: tabular-nums;
+  color: var(--muted-foreground); opacity: .9;
+}
+
+/* buttons: exactly three heights */
+.marketing-cta { height: var(--h-cta); min-height: var(--h-cta); padding: 0 20px; font-size: var(--f-small); }
+.ghost-btn { height: var(--h-control); min-height: var(--h-control); padding: 0 14px; font-size: var(--f-small); }
+.usermenu-trigger { height: var(--h-control); min-height: var(--h-control); }
+.topnav-link, .mkt-nav a { min-height: var(--h-control); font-size: var(--f-small); }
+.mobilenav-link { min-height: 48px; font-size: var(--f-meta); }
+
+/* tags and status words share one box */
+.chip, .mkt-chip, .rolepicker-item-hint, .due-tag { font-size: var(--f-micro); }
