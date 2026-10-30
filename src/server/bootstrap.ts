@@ -69,6 +69,7 @@ export async function applyMigrations(): Promise<{ applied: string[]; skipped: s
 
   const client = new Client({ connectionString });
   await client.connect();
+  await client.query("SELECT pg_advisory_lock(907456120)").catch(() => {});
   const applied: string[] = [];
   const skipped: string[] = [];
   try {
@@ -95,10 +96,17 @@ export async function applyMigrations(): Promise<{ applied: string[]; skipped: s
         applied.push(migration.name);
       } catch (error) {
         await client.query("ROLLBACK").catch(() => {});
+        // A concurrent instance may have applied it a moment ago; if the schema
+        // is there now, that is success, not a failure to show the user.
+        if (await schemaExists().catch(() => false)) {
+          skipped.push(migration.name);
+          continue;
+        }
         throw error;
       }
     }
   } finally {
+    await client.query("SELECT pg_advisory_unlock(907456120)").catch(() => {});
     await client.end();
   }
   return { applied, skipped };

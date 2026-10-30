@@ -92,13 +92,13 @@ async function upsertPeople(tenantId: string, connectionId: string, people: Pers
       create: { id: person.id, tenantId, displayName: person.name, phone: person.phone ?? null, phoneVerifiedAt: person.phone ? daysAgo(20) : null },
     });
     await prisma.customerIdentity.upsert({
-      where: { connectionId_kind_externalRef: { connectionId, kind: "instagram_username", externalRef: person.handle } },
-      update: {},
+      where: { id: `id_${person.id}` },
+      update: { connectionId, kind: "instagram_username", externalRef: person.handle },
       create: { id: `id_${person.id}`, tenantId, customerId: person.id, connectionId, kind: "instagram_username", externalRef: person.handle, verifiedAt: minutesAgo(30) },
     });
     await prisma.conversation.upsert({
-      where: { connectionId_channelRef: { connectionId, channelRef: person.channel } },
-      update: { lastMessageAt: person.at },
+      where: { id: person.conv },
+      update: { connectionId, channelRef: person.channel, lastMessageAt: person.at },
       create: {
         id: person.conv,
         tenantId,
