@@ -250,7 +250,7 @@ async function seedBulkDemo(): Promise<void> {
     // half of the queue belongs to the operator, so the two roles differ
     const assignee = i % 2 === 0 ? "user_saeed" : null;
     await prisma.task.upsert({
-      where: { id: `bulk_task_${n}` },
+      where: { tenantId_dedupeKey: { tenantId: T, dedupeKey: `bulk:${n}` } },
       update: {},
       create: {
         id: `bulk_task_${n}`,
