@@ -43,7 +43,15 @@ export const POST = handler(async (request: Request, context: RouteContext) => {
 
   const suggestion = await prisma.suggestion.findFirst({
     where: { id, tenantId },
-    select: { id: true, reviewState: true, sourceMessageId: true, orderId: true },
+    select: {
+      id: true,
+      reviewState: true,
+      sourceMessageId: true,
+      orderId: true,
+      customerId: true,
+      field: true,
+      proposedValue: true,
+    },
   });
   if (!suggestion) throw errors.notFound("این پیشنهاد پیدا نشد.");
   if (suggestion.reviewState !== "proposed") {
@@ -82,7 +90,20 @@ export const POST = handler(async (request: Request, context: RouteContext) => {
       },
     });
 
-    return result;
+    // Audit #5: a review that changes nothing is a note, not a decision.
+    const applied = await applyOperationalValue(tx, {
+      tenantId,
+      action: body.action,
+      field: suggestion.field,
+      value: body.action === "correct" ? body.value : suggestion.proposedValue,
+      customerId: suggestion.customerId,
+      orderId: suggestion.orderId,
+      actorId: ctx.user.id,
+      suggestionId: suggestion.id,
+      now,
+    });
+
+    return { ...result, applied };
   });
 
   return ok({
@@ -90,5 +111,74 @@ export const POST = handler(async (request: Request, context: RouteContext) => {
     reviewState: updated.reviewState,
     correctedValue: updated.correctedValue ?? null,
     reviewedAt: updated.reviewedAt?.toISOString() ?? null,
+    applied: updated.applied,
   });
 });
+
+type Applied = { applied: boolean; target: string | null; reason?: string };
+
+const IRAN_MOBILE = /^\+989\d{9}$/;
+const E164 = /^\+[1-9]\d{7,14}$/;
+
+/**
+ * Write an accepted/corrected value onto the record it describes (audit #5).
+ *
+ * A rejected proposal is never applied, and a field with no operational home is
+ * reported as such instead of being silently "accepted" into nowhere. The phone
+ * case deliberately does not touch `phoneVerifiedAt`: verifying a number needs an
+ * OTP (phase 4), and an accepted suggestion is not proof of ownership.
+ */
+async function applyOperationalValue(
+  tx: Prisma.TransactionClient,
+  input: {
+    tenantId: string;
+    action: "accept" | "correct" | "reject";
+    field: string;
+    value: unknown;
+    customerId: string | null;
+    orderId: string | null;
+    actorId: string;
+    suggestionId: string;
+    now: Date;
+  },
+): Promise<Applied> {
+  if (input.action === "reject") return { applied: false, target: null, reason: "rejected" };
+
+  if (input.field === "customer.phone") {
+    // proposedValue is stored as { value } (or a bare value for corrected input).
+    const candidate =
+      input.value && typeof input.value === "object" && "value" in (input.value as object)
+        ? (input.value as { value: unknown }).value
+        : input.value;
+    const raw = typeof candidate === "string" ? candidate.trim() : "";
+    if (!E164.test(raw) && !IRAN_MOBILE.test(raw)) {
+      throw errors.invalid("شمارهٔ تلفن با قالب بین‌المللی معتبر نیست.");
+    }
+    if (!input.customerId) return { applied: false, target: null, reason: "no_customer" };
+    const before = await tx.customer.findFirst({
+      where: { id: input.customerId, tenantId: input.tenantId },
+      select: { phone: true },
+    });
+    if (!before) return { applied: false, target: null, reason: "no_customer" };
+    await tx.customer.update({
+      where: { id: input.customerId },
+      // phoneVerifiedAt is untouched on purpose.
+      data: { phone: raw },
+    });
+    await tx.auditEvent.create({
+      data: {
+        tenantId: input.tenantId,
+        actorType: "user",
+        actorId: input.actorId,
+        action: "suggestion.applied",
+        entityType: "Customer",
+        entityId: input.customerId,
+        before: { phone: before.phone } as Prisma.InputJsonValue,
+        after: { phone: raw, suggestionId: input.suggestionId } as Prisma.InputJsonValue,
+      },
+    });
+    return { applied: true, target: "customer.phone" };
+  }
+
+  return { applied: false, target: null, reason: "no_operational_destination" };
+}
