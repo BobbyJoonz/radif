@@ -2,7 +2,7 @@ import type { Locale } from "./config";
 
 /**
  * The marketing copy. Kept out of the app dictionary on purpose: the landing page
- * and the product share a voice but not a vocabulary — a seller never reads
+ * and the product share a voice but not a vocabulary, a seller never reads
  * "Start free" inside the queue, and a visitor never reads "صف کار" in a button.
  *
  * Rules from DIRECTION.md §4 still apply: short sentences, no adjective soup, and
@@ -55,7 +55,7 @@ const fa: MarketingCopy = {
   },
   hero: {
     title: "هر دایرکت، سرِ ردیفش.",
-    lede: "ردیف صف کار فروشندهٔ اینستاگرامی است: هر پیام به یک اقدام روشن با شاهد تبدیل می‌شود — پرداختِ اعلام‌شده، کد رهگیریِ ثبت‌شده، آدرسِ تازه، همه از دل همان پیام.",
+    lede: "ردیف صف کار فروشندهٔ اینستاگرامی است: هر پیام به یک اقدام روشن با شاهد تبدیل می‌شود, پرداختِ اعلام‌شده، کد رهگیریِ ثبت‌شده، آدرسِ تازه، همه از دل همان پیام.",
     micro: "بدون کارت بانکی · دادهٔ نمایشی آماده است · فارسی و انگلیسی",
   },
   specimen: {
@@ -143,7 +143,7 @@ const en: MarketingCopy = {
   },
   hero: {
     title: "Every DM finds its row.",
-    lede: "Radif is the work queue for an Instagram seller: each message becomes one clear action with a witness — a claimed payment, a recorded tracking code, a new address, all from the message itself.",
+    lede: "Radif is the work queue for an Instagram seller: each message becomes one clear action with a witness, a claimed payment, a recorded tracking code, a new address, all from the message itself.",
     micro: "No card · demo data ready · Persian and English",
   },
   specimen: {
@@ -174,7 +174,7 @@ const en: MarketingCopy = {
     title: "How it works",
     lede: "Four steps, no magic.",
     steps: [
-      { title: "A message arrives", body: "From a file, a replay of demo data, or the official Instagram connection — one path." },
+      { title: "A message arrives", body: "From a file, a replay of demo data, or the official Instagram connection, one path." },
       { title: "Intents and fields are proposed", body: "With evidence, with confidence, and with “unknown” wherever the message said nothing." },
       { title: "You confirm or correct", body: "A human decision always outranks a proposal, and edits stay in the audit trail." },
       { title: "The reply is read back from stored state", body: "Copying or previewing a reply never marks anything as sent." },

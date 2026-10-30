@@ -41,6 +41,17 @@ portal, marketing automation. There is no fake "connected" badge anywhere.
 
 ---
 
+## Two front doors
+
+`/{fa|en}` is the **public landing page** (no session): hero, what the product
+claims and refuses to claim, how it works, FAQ, and two ways in — an orange
+"شروع رایگان" that opens real registration (`/signup`, which creates a shop and
+the owner membership through `/api/onboarding`), and "بدون ثبتنام امتحان کن" which
+hands out a **random demo account** (`/api/guest`) and signs you in through the
+normal Better Auth endpoint — no separate guest auth path, no faked session.
+
+`/{fa|en}/today` is the product itself, behind the session.
+
 ## Run it
 
 Requirements: Node 22+, pnpm 10+, and a PostgreSQL 17 database.
