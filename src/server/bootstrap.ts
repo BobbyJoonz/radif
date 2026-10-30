@@ -3,6 +3,7 @@ import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import { Client } from "pg";
 import { prisma } from "@/server/db";
+import { seedRichDemo } from "@/server/demo/rich";
 
 /**
  * First-run provisioning for a fresh deployment.
@@ -91,135 +92,6 @@ export async function applyMigrations(): Promise<{ applied: string[] }> {
  * the demo script opens on. The full narrative seed stays in prisma/seed.ts.
  */
 export async function bootstrapDemo(): Promise<{ tenant: string; user: string }> {
-  const { hashPassword } = await import("better-auth/crypto");
-  const password = await hashPassword("radif-demo-1405");
-  const now = Date.now();
-  const minutesAgo = (m: number) => new Date(now - m * 60_000);
-
-  const tenant = await prisma.tenant.create({
-    data: {
-      id: "tenant_toranj",
-      slug: "toranj",
-      nameFa: "آتلیهٔ ترنج",
-      nameEn: "Atelier Toranj",
-      timezone: "Asia/Tehran",
-      currency: "IRR",
-      isDemo: true,
-      settings: { create: { demoMode: true } },
-    },
-  });
-
-  await prisma.user.create({
-    data: { id: "user_maryam", name: "مریم رستمی", email: "maryam@toranj.demo", emailVerified: true },
-  });
-  await prisma.account.create({
-    data: { id: "acct_user_maryam", accountId: "user_maryam", providerId: "credential", userId: "user_maryam", password },
-  });
-  await prisma.membership.create({ data: { id: "mem_maryam", tenantId: tenant.id, userId: "user_maryam", role: "owner" } });
-
-  await prisma.channelConnection.create({
-    data: {
-      id: "conn_toranj_replay",
-      tenantId: tenant.id,
-      channel: "replay",
-      accountRef: "toranj.studio",
-      displayName: "آتلیهٔ ترنج",
-      status: "ready",
-      lastSyncAt: minutesAgo(2),
-    },
-  });
-
-  const people = [
-    { id: "cust_negar", name: "نگار احمدی", handle: "negar.ahmadi", conv: "conv_negar", text: "واریز کردم، کد رهگیری رو می‌فرستید؟ آدرسم هم عوض شده، هنوز نفرستادید؟" },
-    { id: "cust_shirin", name: "شیرین کیانی", handle: "shirin.kiani", conv: "conv_shirin", text: "سلام، روسری گل‌دار رو می‌خوام. ۱۲۰۰ حساب کردم، درسته؟" },
-    { id: "cust_hossein", name: "حسین مرادی", handle: "hossein.moradi", conv: "conv_hossein", text: "شال ترنج موجوده؟ قیمتش چنده؟" },
-  ];
-
-  for (const [index, person] of people.entries()) {
-    await prisma.customer.create({ data: { id: person.id, tenantId: tenant.id, displayName: person.name } });
-    await prisma.customerIdentity.create({
-      data: {
-        id: `id_${person.id}`,
-        tenantId: tenant.id,
-        customerId: person.id,
-        connectionId: "conn_toranj_replay",
-        kind: "instagram_username",
-        externalRef: person.handle,
-      },
-    });
-    await prisma.conversation.create({
-      data: {
-        id: person.conv,
-        tenantId: tenant.id,
-        connectionId: "conn_toranj_replay",
-        customerId: person.id,
-        channelRef: `DEMO-CONV-${114 + index}`,
-        lastMessageAt: minutesAgo(26 + index * 20),
-        unrepliedCount: 1,
-      },
-    });
-    await prisma.message.create({
-      data: {
-        id: `DEMO-MSG-${9001 + index}`,
-        tenantId: tenant.id,
-        conversationId: person.conv,
-        direction: "inbound",
-        source: "replay",
-        externalRef: `DEMO-MSG-${9001 + index}`,
-        senderRef: person.handle,
-        text: person.text,
-        occurredAt: minutesAgo(26 + index * 20),
-        analysisState: "done",
-      },
-    });
-  }
-
-  await prisma.task.createMany({
-    data: [
-      {
-        id: "task_bootstrap_pay",
-        tenantId: tenant.id,
-        type: "payment_reconcile",
-        status: "open",
-        priority: "P1",
-        title: "تطبیق پرداخت — نگار احمدی",
-        reasonCode: "payment_mismatch",
-        reasonText: "اعلام پرداخت بررسی‌نشده پیش از ارسال",
-        dueAt: minutesAgo(60 * 26),
-        customerId: "cust_negar",
-        messageId: "DEMO-MSG-9001",
-        dedupeKey: "payment:conv_negar",
-      },
-      {
-        id: "task_bootstrap_amount",
-        tenantId: tenant.id,
-        type: "draft_review",
-        status: "open",
-        priority: "P1",
-        title: "بررسی مبلغ — شیرین کیانی",
-        reasonCode: "amount_without_unit",
-        reasonText: "مبلغ بدون واحد روشن",
-        dueAt: minutesAgo(60 * 4),
-        customerId: "cust_shirin",
-        messageId: "DEMO-MSG-9002",
-        dedupeKey: "draft:conv_shirin",
-      },
-      {
-        id: "task_bootstrap_reply",
-        tenantId: tenant.id,
-        type: "customer_reply",
-        status: "open",
-        priority: "P2",
-        title: "پاسخ موجودی شال",
-        reasonCode: "product_question",
-        reasonText: "پرسش قیمت و موجودی",
-        dueAt: minutesAgo(-60 * 18),
-        customerId: "cust_hossein",
-        messageId: "DEMO-MSG-9003",
-        dedupeKey: "reply:conv_hossein",
-      },
-    ],
-  });
-
-  return { tenant: tenant.id, user: "user_maryam" };
+  await seedRichDemo();
+  return { tenant: "tenant_toranj", user: "user_maryam" };
 }

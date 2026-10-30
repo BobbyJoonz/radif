@@ -57,6 +57,31 @@ function buildAuth() {
       useSecureCookies: env.APP_MODE === "production",
       cookiePrefix: "radif",
     },
+    // Sign-up creates a User; a user with no Membership has no shop and the
+    // whole app would bounce them back to /login forever. Every new account
+    // becomes the owner of its own empty shop, in the same request.
+    databaseHooks: {
+      user: {
+        create: {
+          after: async (created: { id: string; email: string }) => {
+            const base = created.email.split("@")[0].replace(/[^a-zA-Z0-9]+/g, "-").toLowerCase().slice(0, 24) || "shop";
+            const slug = `${base}-${created.id.slice(-6).toLowerCase()}`;
+            const tenant = await prisma.tenant.create({
+              data: {
+                slug,
+                nameFa: "فروشگاه تازه",
+                nameEn: "New shop",
+                isDemo: env.APP_MODE === "demo",
+                settings: { create: { demoMode: env.APP_MODE === "demo" } },
+              },
+            });
+            await prisma.membership.create({
+              data: { tenantId: tenant.id, userId: created.id, role: "owner" },
+            });
+          },
+        },
+      },
+    },
     rateLimit: {
       enabled: true,
       window: 60,

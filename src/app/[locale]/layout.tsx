@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "../globals.css";
 import { directionOf, isLocale, locales, type Locale } from "@/i18n/config";
+import { ensureDemoReady } from "@/server/ensure";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.BETTER_AUTH_URL ?? "http://localhost:3000"),
@@ -52,6 +53,9 @@ export function generateStaticParams() {
 export default async function LocaleLayout({ children, params }: LayoutProps<"/[locale]">) {
   const { locale: raw } = await params;
   const locale: Locale = isLocale(raw) ? raw : "fa";
+  // Every locale route — /fa/login included — makes a demo deployment provision
+  // itself before it renders. Idempotent, and a no-op outside demo mode.
+  await ensureDemoReady();
   const dir = directionOf(locale);
 
   return (

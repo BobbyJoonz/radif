@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { applyMigrations, bootstrapDemo, schemaExists } from "@/server/bootstrap";
+import { seedRichDemo } from "@/server/demo/rich";
 import { prisma } from "@/server/db";
 import { isDemo } from "@/lib/env";
 
@@ -19,7 +20,7 @@ import { isDemo } from "@/lib/env";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-async function run() {
+async function run(request: Request) {
   if (!isDemo()) {
     return NextResponse.json(
       { ok: false, error: { code: "forbidden", message: "Setup is demo-mode only. Run `prisma migrate deploy` in production." } },
@@ -27,6 +28,7 @@ async function run() {
     );
   }
 
+  const wantsEnrich = new URL(request.url).searchParams.get("enrich") === "1";
   const hasSchema = await schemaExists();
   if (hasSchema) {
     // A deploy can land with the tables already created (a build step ran
@@ -34,9 +36,14 @@ async function run() {
     // half-provisioned deployment, not a ready one.
     const tenants = await prisma.tenant.count();
     if (tenants > 0) {
+      if (wantsEnrich) {
+        // idempotent: upgrades the minimal bootstrap to the full demo narrative
+        const demo = await seedRichDemo();
+        return NextResponse.json({ ok: true, data: { state: "enriched", ...demo } });
+      }
       return NextResponse.json({
         ok: true,
-        data: { state: "ready", tenants, note: "already provisioned; nothing to do" },
+        data: { state: "ready", tenants, note: "already provisioned; add ?enrich=1 to load the full demo" },
       });
     }
     const demo = await bootstrapDemo();
@@ -66,9 +73,9 @@ async function run() {
   });
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    return await run();
+    return await run(request);
   } catch (error) {
     console.error("[setup] failed", error);
     return NextResponse.json(
