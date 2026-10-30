@@ -14,6 +14,7 @@ export const dynamic = "force-dynamic";
 
 const bodySchema = z
   .object({
+    acknowledgeFreeOrder: z.boolean().optional(),
     version: z.number().int().positive("نسخهٔ سفارش لازم است."),
   })
   .strict();
@@ -25,6 +26,6 @@ export const POST = handler(async (request: Request, context: RouteContext) => {
   const { id } = await context.params;
   const body = bodySchema.parse(await readJsonBody(request));
 
-  const order = await confirmDraft(ctx, id, body);
+  const order = await confirmDraft(ctx, id, { version: body.version, acknowledgeFreeOrder: body.acknowledgeFreeOrder });
   return ok({ order });
 });

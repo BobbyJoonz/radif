@@ -333,7 +333,7 @@ export async function updateDraft(
 export async function confirmDraft(
   ctx: SessionContext,
   orderId: string,
-  input: { version: number },
+  input: { version: number; acknowledgeFreeOrder?: boolean },
 ): Promise<OrderSummaryDTO> {
   const tenantId = ctx.tenant.id;
   const now = new Date();
@@ -351,6 +351,28 @@ export async function confirmDraft(
       throw errors.conflict("این سفارش جای دیگری تغییر کرده است؛ صفحه را تازه کنید.");
     }
 
+    // Audit's P0: an automatically created draft with no items and a default
+    // total of zero used to confirm, producing an order that says nothing.
+    // A stage-specific completeness gate is the only thing that makes a draft
+    // "actionable" rather than "present".
+    const items = await tx.orderItem.findMany({
+      where: { tenantId, orderId: order.id },
+      select: { qty: true, unitPriceMinor: true, currency: true },
+    });
+    const complete = items.filter((item) => item.qty > 0 && item.currency.trim().length > 0);
+    if (complete.length === 0) {
+      throw errors.invalid("این پیش‌نویس هیچ قلم معتبری ندارد؛ ابتدا اقلام سفارش را کامل کنید.");
+    }
+    const computedTotal = complete.reduce(
+      (sum, item) => sum + BigInt(item.qty) * item.unitPriceMinor,
+      0n,
+    );
+    // A genuinely free order is allowed, but only after an explicit human
+    // acknowledgement — never because the total happened to default to zero.
+    if (computedTotal === 0n && input.acknowledgeFreeOrder !== true) {
+      throw errors.invalid("مبلغ این سفارش صفر است؛ اگر واقعاً رایگان است، آن را صریح تأیید کنید.");
+    }
+
     const updated = await tx.order.updateMany({
       where: {
         id: order.id,
@@ -362,6 +384,8 @@ export async function confirmDraft(
         status: "confirmed",
         confirmedAt: now,
         confirmedById: ctx.user.id,
+        // The stored total follows the items that were actually confirmed.
+        totalMinor: computedTotal,
         version: { increment: 1 },
       },
     });
