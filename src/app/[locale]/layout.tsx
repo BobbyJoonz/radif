@@ -74,7 +74,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps<"/[
               : "This app needs JavaScript to work."}
           </div>
         </noscript>
-        {gate.ok ? children : <SetupScreen missing={gate.missing} reason={gate.reason ?? "env"} />}
+        {gate.ok ? children : <SetupScreen missing={gate.missing} reason={gate.reason === "database" ? "unreachable" : (gate.reason ?? "env")} />}
       </body>
     </html>
   );
