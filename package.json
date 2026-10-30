@@ -25,7 +25,8 @@
     "test:watch": "vitest",
     "e2e": "playwright test",
     "design:shots": "node scripts/design-shots.mjs",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "db:schema:hash": "node scripts/schema-fingerprint.mjs"
   },
   "dependencies": {
     "@prisma/adapter-pg": "7.10.1",
