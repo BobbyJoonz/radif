@@ -71,6 +71,7 @@ async function main() {
       timezone: "Asia/Tehran",
       currency: "IRR",
       isDemo: true,
+      sharedDemo: true,
       settings: { create: { demoMode: true, slaShipMin: 2880, slaFirstReplyMin: 120 } },
       memberships: {
         create: [
@@ -89,6 +90,7 @@ async function main() {
       timezone: "Asia/Tehran",
       currency: "IRR",
       isDemo: true,
+      sharedDemo: true,
       settings: { create: { demoMode: true } },
       memberships: { create: [{ id: "mem_raha", userId: "user_raha", role: "owner" }] },
     },

@@ -93,6 +93,9 @@ model Tenant {
   timezone      String   @default("Asia/Tehran")
   currency      String   @default("IRR")
   isDemo        Boolean  @default(false)
+  // A shared demo is entered by many visitors; a personal demo belongs to one.
+  // Destructive actions (reset) are only allowed on the personal kind.
+  sharedDemo Boolean @default(false)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
