@@ -56,7 +56,7 @@ export function LoginScreen({
     setError(null);
     let response: Response | null = null;
     try {
-      response = await fetch("./api/auth/sign-in/email", {
+      response = await fetch("/api/auth/sign-in/email", {
         method: "POST",
         headers: { "content-type": "application/json" },
         credentials: "same-origin",

@@ -81,7 +81,7 @@ export function TasksScreen({ locale, rows, showDone, userId, role, state, nowIS
 
   async function patchTask(task: TaskRow, body: Record<string, unknown>, message: string) {
     setBusy(task.id);
-    const result = await apiFetch<{ task: TaskRow }>(`./api/tasks/${task.id}`, {
+    const result = await apiFetch<{ task: TaskRow }>(`/api/tasks/${task.id}`, {
       method: "PATCH",
       body: JSON.stringify(body),
     });

@@ -193,7 +193,7 @@ export function InboxScreen({ locale, rows, detail, filter, q, state, nowISO }: 
     const value = correction[suggestion.id];
     if (action === "correct" && !value) return;
     setBusy(suggestion.id);
-    const result = await apiFetch<{ reviewState: string }>(`./api/suggestions/${suggestion.id}/review`, {
+    const result = await apiFetch<{ reviewState: string }>(`/api/suggestions/${suggestion.id}/review`, {
       method: "POST",
       body: JSON.stringify({ action, ...(action === "correct" ? { value } : {}) }),
     });
@@ -211,7 +211,7 @@ export function InboxScreen({ locale, rows, detail, filter, q, state, nowISO }: 
     if (!orderId) return;
     setReplyBusy(true);
     const result = await apiFetch<{ templateKey: string; templateVersion: string; body: string; allowed: boolean }>(
-      `./api/orders/${orderId}/reply-preview`,
+      `/api/orders/${orderId}/reply-preview`,
     );
     setReplyBusy(false);
     if (result.ok) {

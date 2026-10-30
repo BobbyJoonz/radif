@@ -100,7 +100,7 @@ export function SettingsScreen({
       return;
     }
     setBusy(true);
-    const result = await apiFetch<SettingsDTO>("./api/settings", {
+    const result = await apiFetch<SettingsDTO>("/api/settings", {
       method: "PATCH",
       body: JSON.stringify({
         workday: { startMin: form.startMin, endMin: form.endMin },

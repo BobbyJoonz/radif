@@ -252,7 +252,7 @@ function OrderDetailPane({
 
   async function saveNotes() {
     setNotesBusy(true);
-    const result = await apiFetch<{ version: number }>(`./api/orders/${order.id}`, {
+    const result = await apiFetch<{ version: number }>(`/api/orders/${order.id}`, {
       method: "PATCH",
       body: JSON.stringify({ version: order.version, patch: { notes } }),
     });
@@ -268,7 +268,7 @@ function OrderDetailPane({
 
   async function confirmDraft() {
     setConfirmBusy(true);
-    const result = await apiFetch<{ order: unknown }>(`./api/orders/${order.id}/confirm`, {
+    const result = await apiFetch<{ order: unknown }>(`/api/orders/${order.id}/confirm`, {
       method: "POST",
       body: JSON.stringify({ version: order.version }),
     });
@@ -284,7 +284,7 @@ function OrderDetailPane({
 
   async function claimPayment() {
     setClaimBusy(true);
-    const result = await apiFetch<{ claim: PaymentClaimDTO }>(`./api/orders/${order.id}/payment-claims`, {
+    const result = await apiFetch<{ claim: PaymentClaimDTO }>(`/api/orders/${order.id}/payment-claims`, {
       method: "POST",
       body: JSON.stringify({}),
     });
@@ -301,7 +301,7 @@ function OrderDetailPane({
     if (!claim) return;
     setDecisionBusy(true);
     const result = await apiFetch<{ claim: PaymentClaimDTO }>(
-      `./api/orders/${order.id}/payment-claims/${claim.id}/verify`,
+      `/api/orders/${order.id}/payment-claims/${claim.id}/verify`,
       { method: "POST", body: JSON.stringify({ decision, ...(reason ? { reason } : {}) }) },
     );
     setDecisionBusy(false);
@@ -317,7 +317,7 @@ function OrderDetailPane({
 
   async function saveShipment() {
     setShipBusy(true);
-    const result = await apiFetch<{ shipment: unknown }>(`./api/orders/${order.id}/shipment`, {
+    const result = await apiFetch<{ shipment: unknown }>(`/api/orders/${order.id}/shipment`, {
       method: "PATCH",
       body: JSON.stringify({
         status: shipStatus,

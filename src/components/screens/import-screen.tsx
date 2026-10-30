@@ -90,7 +90,7 @@ export function ImportScreen({
       return;
     }
     setBusy("preview");
-    const result = await apiFetch<ImportPreviewDTO>("./api/import/preview", {
+    const result = await apiFetch<ImportPreviewDTO>("/api/import/preview", {
       method: "POST",
       body: JSON.stringify({ format: file.format, filename: file.name, content: file.content }),
     });
@@ -112,7 +112,7 @@ export function ImportScreen({
       return;
     }
     setBusy("commit");
-    const result = await apiFetch<ImportCommitDTO>("./api/import/commit", {
+    const result = await apiFetch<ImportCommitDTO>("/api/import/commit", {
       method: "POST",
       body: JSON.stringify({ format: file.format, filename: file.name, content: file.content }),
     });
