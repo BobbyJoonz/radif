@@ -1053,3 +1053,70 @@ button[aria-disabled="true"] {
 .publicstatus-item { display: flex; justify-content: space-between; gap: var(--s4); font-size: var(--t-small); }
 .publicstatus-item.total { border-top: 1px solid var(--rule); padding-top: var(--s3); font-weight: 600; }
 .publicstatus-note { font-size: var(--t-meta); color: var(--muted-foreground); line-height: 1.7; }
+
+/* ── demo persona picker ─────────────────────────────────────────────────── */
+.rolepicker { position: relative; display: inline-block; }
+.rolepicker-pop {
+  position: absolute; top: calc(100% + 8px); inset-inline-start: 0; z-index: 45;
+  width: 320px; max-width: min(320px, 86vw); padding: var(--s4);
+  background: var(--surface-raised); border: 1px solid var(--border);
+  border-radius: var(--r-3); box-shadow: var(--shadow-sheet);
+}
+.rolepicker-title { font-size: var(--t-small); font-weight: 700; }
+.rolepicker-hint { margin-top: 2px; font-size: var(--t-meta); color: var(--muted-foreground); line-height: 1.7; }
+.rolepicker-list { display: grid; gap: 6px; margin-top: var(--s3); }
+.rolepicker-item {
+  display: grid; grid-template-columns: 1fr auto; gap: 2px var(--s3);
+  align-items: center; text-align: start; cursor: pointer;
+  padding: 10px 12px; min-height: 56px;
+  background: transparent; border: 1px solid var(--rule);
+  border-radius: var(--r-2); color: var(--foreground);
+  transition: background-color var(--dur-1) var(--ease-out), border-color var(--dur-1) var(--ease-out);
+}
+.rolepicker-item:hover { background: color-mix(in oklab, var(--surface) 75%, transparent); border-color: var(--muted-foreground); }
+.rolepicker-item:focus-visible { outline: 2px solid var(--primary); outline-offset: 1px; }
+.rolepicker-item:disabled { opacity: .7; cursor: progress; }
+.rolepicker-item-head { font-size: var(--t-small); font-weight: 600; }
+.rolepicker-item-hint { grid-column: 1 / 2; font-size: var(--t-micro); color: var(--muted-foreground); line-height: 1.6; }
+.rolepicker-item-go { grid-column: 2; grid-row: 1 / 3; font-size: 18px; color: var(--muted-foreground); }
+.rolepicker-error { margin-top: var(--s2); font-size: var(--t-micro); color: var(--critical); }
+
+/* ── customer demo view ──────────────────────────────────────────────────── */
+.cust { max-width: 900px; margin: 0 auto; padding: var(--s7) var(--s5) var(--s8); }
+.cust-eyebrow { font-size: var(--t-micro); letter-spacing: .04em; color: var(--primary); }
+.cust h1 { margin-top: var(--s2); font-size: 28px; font-weight: 800; letter-spacing: -0.015em; }
+.cust-intro { margin-top: var(--s2); font-size: var(--t-small); color: var(--muted-foreground); line-height: 1.85; max-width: 60ch; }
+.cust-h2 {
+  display: flex; align-items: baseline; gap: var(--s2);
+  margin-top: var(--s6); padding-bottom: var(--s2);
+  border-bottom: 1px solid var(--rule); font-size: var(--t-h2); font-weight: 700;
+}
+.cust-count { font-size: var(--t-meta); color: var(--muted-foreground); font-weight: 400; font-variant-numeric: tabular-nums; }
+.cust-orders { list-style: none; margin: 0; padding: 0; }
+.cust-order {
+  display: grid; grid-template-columns: 120px 1fr auto; gap: 4px var(--s3);
+  align-items: baseline; padding: 10px 0; border-bottom: 1px solid var(--rule-soft);
+}
+.cust-ref { font-size: var(--t-micro); color: var(--muted-foreground); }
+.cust-when { font-size: var(--t-micro); color: var(--muted-foreground); }
+.cust-amount { font-size: var(--t-small); font-weight: 600; text-align: end; }
+.cust-states { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: var(--s3); font-size: var(--t-micro); color: var(--muted-foreground); }
+@media (max-width: 640px) {
+  .cust-order { grid-template-columns: 1fr auto; }
+  .cust-when { grid-column: 1 / -1; }
+}
+
+/* ── one selected state for every filter chip ────────────────────────────────
+   The due-filter used to fill orange with square corners while the other group
+   used a raised pill, so two "selected" things looked like two different systems. */
+[class*="filter"][data-active="true"],
+[class*="filter"][aria-current="true"],
+[class*="filter"][aria-pressed="true"],
+[class*="filter"][class*="active"],
+[class*="Filter"][data-active="true"] {
+  background: var(--surface-raised) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--foreground) !important;
+  border-radius: var(--r-pill) !important;
+  padding-inline: 10px;
+}

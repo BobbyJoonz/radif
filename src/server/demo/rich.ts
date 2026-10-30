@@ -130,6 +130,150 @@ async function upsertPeople(tenantId: string, connectionId: string, people: Pers
   }
 }
 
+/**
+ * Bulk history, so a demo does not feel like a museum of three rows.
+ *
+ * Deterministic and idempotent: fifty extra customers with one thread each,
+ * fifty extra orders in the demo customer's history, and fifty extra tasks split
+ * across the owner and the operator. One loop, one set of templates, no randomness
+ * that changes between deployments.
+ */
+const BULK_CUSTOMERS = 50;
+
+const bulkTexts = [
+  "سلام، شال ترنج موجوده؟",
+  "واریز کردم، فیش رو می‌فرستید؟",
+  "آدرسم عوض شده، لطفاً قبل از ارسال بگید.",
+  "کد رهگیری سفارش قبلیمو می‌خواستم.",
+  "می‌خوام دو تا از روسری گل‌دار بگیرم.",
+  "سفارشمو کنسل کنین لطفاً.",
+  "کیف پارچه‌ای رنگ زیتونی دارید؟",
+  "بسته نرسیده، پیگیری می‌کنید؟",
+  "برای هدیه بسته‌بندی می‌کنید؟",
+  "قیمت شال با ارسال چقدر می‌شه؟",
+];
+
+async function seedBulkDemo(): Promise<void> {
+  const base = Date.now();
+  for (let i = 0; i < BULK_CUSTOMERS; i++) {
+    const n = String(i + 1).padStart(3, "0");
+    const customerId = `bulk_cust_${n}`;
+    const conversationId = `bulk_conv_${n}`;
+    const messageId = `bulk_msg_${n}`;
+    const at = new Date(base - (i + 1) * 37 * 60_000);
+    const name = `مشتری نمونهٔ ${n}`;
+    const handle = `demo.customer.${n}`;
+
+    await prisma.customer.upsert({
+      where: { id: customerId },
+      update: {},
+      create: { id: customerId, tenantId: T, displayName: name },
+    });
+    await prisma.customerIdentity.upsert({
+      where: { id: `bulk_id_${n}` },
+      update: {},
+      create: {
+        id: `bulk_id_${n}`,
+        tenantId: T,
+        customerId,
+        connectionId: CONN_T,
+        kind: "instagram_username",
+        externalRef: handle,
+        verifiedAt: at,
+      },
+    });
+    await prisma.conversation.upsert({
+      where: { id: conversationId },
+      update: {},
+      create: {
+        id: conversationId,
+        tenantId: T,
+        connectionId: CONN_T,
+        customerId,
+        channelRef: `DEMO-CONV-B${n}`,
+        lastMessageAt: at,
+        unrepliedCount: i % 3 === 0 ? 1 : 0,
+        createdAt: at,
+      },
+    });
+    await prisma.message.upsert({
+      where: { id: messageId },
+      update: {},
+      create: {
+        id: messageId,
+        tenantId: T,
+        conversationId,
+        direction: "inbound",
+        source: "replay",
+        externalRef: messageId,
+        senderRef: handle,
+        text: bulkTexts[i % bulkTexts.length],
+        occurredAt: at,
+        analysisState: "done",
+      },
+    });
+
+    // an order in the customer's history, so the list has depth
+    const orderId = `bulk_order_${n}`;
+    await prisma.order.upsert({
+      where: { id: orderId },
+      update: {},
+      create: {
+        id: orderId,
+        tenantId: T,
+        customerId: "cust_negar",
+        publicRef: `DEMO-ORD-B${n}`,
+        status: i % 5 === 0 ? "needs_review" : "confirmed",
+        currency: "IRR",
+        totalMinor: BigInt(12_000_000 + (i % 4) * 2_500_000),
+        version: 1,
+        orderCreatedAt: at,
+        confirmedAt: i % 5 === 0 ? null : at,
+        confirmedById: i % 5 === 0 ? null : "user_maryam",
+      },
+    });
+    await prisma.orderItem.upsert({
+      where: { id: `${orderId}_item_1` },
+      update: {},
+      create: {
+        id: `${orderId}_item_1`,
+        tenantId: T,
+        orderId,
+        productId: i % 2 === 0 ? "prod_shal" : "prod_roosari",
+        titleSnapshot: i % 2 === 0 ? "شال ابریشم نقشهٔ ترنج" : "روسری ابریشم گل‌دار",
+        qty: 1 + (i % 2),
+        unitPriceMinor: BigInt(12_000_000 + (i % 4) * 2_500_000),
+        currency: "IRR",
+      },
+    });
+
+    // half of the queue belongs to the operator, so the two roles differ
+    const assignee = i % 2 === 0 ? "user_saeed" : null;
+    await prisma.task.upsert({
+      where: { id: `bulk_task_${n}` },
+      update: {},
+      create: {
+        id: `bulk_task_${n}`,
+        tenantId: T,
+        type: i % 3 === 0 ? "payment_reconcile" : i % 3 === 1 ? "customer_reply" : "tracking_followup",
+        status: i % 7 === 0 ? "in_progress" : "open",
+        priority: i % 4 === 0 ? "P1" : i % 4 === 1 ? "P2" : "P3",
+        title: `پیگیری نمونهٔ ${n}`,
+        reasonCode: i % 3 === 0 ? "payment_mismatch" : i % 3 === 1 ? "product_question" : "tracking_missing",
+        reasonText:
+          i % 3 === 0 ? "اعلام پرداخت بررسی‌نشده" : i % 3 === 1 ? "پرسش محصول بی‌پاسخ" : "کد رهگیری ثبت نشده",
+        dueAt: new Date(base + (i % 6 === 0 ? -1 : 1) * (i + 1) * 3 * 3_600_000),
+        orderId,
+        messageId,
+        customerId,
+        assigneeId: assignee,
+        dedupeKey: `bulk:${n}`,
+        createdAt: at,
+      },
+    });
+  }
+}
+
 export async function seedRichDemo(): Promise<{
   tenants: number;
   conversations: number;
@@ -408,6 +552,8 @@ export async function seedRichDemo(): Promise<{
       },
     });
   }
+
+  await seedBulkDemo();
 
   const [tenants, conversations, messages, ordersCount, tasksCount] = await Promise.all([
     prisma.tenant.count({ where: { isDemo: true } }),

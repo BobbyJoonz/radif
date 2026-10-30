@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { BrandMark } from "@/components/brand/brand-mark";
-import { GuestButton } from "@/components/marketing/guest-button";
+import { DemoRolePicker } from "@/components/marketing/demo-role-picker";
 import type { Locale } from "@/i18n/config";
 import { otherLocale } from "@/i18n/config";
 import { getMarketingCopy } from "@/i18n/marketing";
@@ -133,7 +133,7 @@ export function Landing({ locale, signedIn }: { locale: Locale; signedIn: boolea
               <Link href={signupHref} className="marketing-cta is-primary">
                 {t.cta.primary}
               </Link>
-              <GuestButton
+              <DemoRolePicker
                 locale={locale}
                 label={t.cta.guest}
                 pendingLabel={t.cta.guestPending}
@@ -284,7 +284,7 @@ export function Landing({ locale, signedIn }: { locale: Locale; signedIn: boolea
               <Link href={signupHref} className="marketing-cta is-primary">
                 {t.cta.primary}
               </Link>
-              <GuestButton
+              <DemoRolePicker
                 locale={locale}
                 label={t.cta.guest}
                 pendingLabel={t.cta.guestPending}
