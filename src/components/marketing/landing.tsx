@@ -24,34 +24,48 @@ export function Landing({ locale, signedIn }: { locale: Locale; signedIn: boolea
     {
       name: locale === "fa" ? "نگار احمدی" : "Negar Ahmadi",
       ref: "DEMO-ORD-1042",
-      why:
+      chips:
         locale === "fa"
-          ? "اعلام پرداخت · تغییر آدرس · درخواست رهگیری"
-          : "payment claim · address change · tracking",
+          ? ["اعلام پرداخت", "تغییر آدرس"]
+          : ["payment claim", "address change"],
       next: locale === "fa" ? "تطبیق پرداخت و تکمیل آدرس" : "Reconcile payment, complete address",
       due: locale === "fa" ? "۲ روز پیش" : "2 days ago",
       tag: t.specimen.overdue,
       late: true,
+      selected: true,
     },
     {
       name: locale === "fa" ? "شیرین کیانی" : "Shirin Kiani",
       ref: "DEMO-ORD-1039",
-      why: locale === "fa" ? "مبلغ بدون واحد روشن" : "amount without a unit",
+      chips: locale === "fa" ? ["مبلغ بدون واحد"] : ["amount without a unit"],
       next: locale === "fa" ? "تأیید مبلغ با فروشنده" : "Confirm the amount",
       due: locale === "fa" ? "۱۴:۳۰" : "14:30",
       tag: t.specimen.today,
       late: false,
+      selected: false,
     },
     {
       name: locale === "fa" ? "حسین مرادی" : "Hossein Moradi",
       ref: "DEMO-ORD-1031",
-      why: locale === "fa" ? "پرسش محصول" : "product question",
+      chips: locale === "fa" ? ["پرسش محصول"] : ["product question"],
       next: locale === "fa" ? "پاسخ آماده: موجودی و قیمت" : "Ready answer: stock and price",
       due: locale === "fa" ? "۱۸:۰۰" : "18:00",
       tag: t.specimen.today,
       late: false,
+      selected: false,
+    },
+    {
+      name: locale === "fa" ? "رضا نیک‌پور" : "Reza Nikpour",
+      ref: "DEMO-ORD-1027",
+      chips: locale === "fa" ? ["شکایت تأخیر", "رهگیری ثبت نشده"] : ["late delivery", "no tracking code"],
+      next: locale === "fa" ? "ارجاع به مسئول" : "Escalate to the owner",
+      due: locale === "fa" ? "دیروز" : "yesterday",
+      tag: t.specimen.overdue,
+      late: true,
+      selected: false,
     },
   ];
+
 
   return (
     <div className="mkt">
@@ -62,19 +76,27 @@ export function Landing({ locale, signedIn }: { locale: Locale; signedIn: boolea
       <header className="mkt-head">
         <div className="mkt-head-inner">
           <Link href={`/${locale}`} className="mkt-brand" aria-label="ردیف · Radif">
-            <BrandMark priority />
+            <BrandMark priority size="sm" />
           </Link>
+          <span className="mkt-head-rule" aria-hidden="true" />
           <nav className="mkt-nav" aria-label={locale === "fa" ? "بخش‌های صفحه" : "Sections"}>
-            <a href="#value">{t.nav.value}</a>
-            <a href="#how">{t.nav.how}</a>
-            <a href="#faq">{t.nav.faq}</a>
+            <a href="#value">
+              <span>{t.nav.value}</span>
+            </a>
+            <a href="#how">
+              <span>{t.nav.how}</span>
+            </a>
+            <a href="#faq">
+              <span>{t.nav.faq}</span>
+            </a>
           </nav>
+          <span className="mkt-head-spacer" aria-hidden="true" />
           <div className="mkt-actions">
             <Link href={`/${otherLocale(locale)}`} className="mkt-lang" hrefLang={otherLocale(locale)}>
               {otherLocale(locale) === "en" ? "EN" : "فا"}
             </Link>
             {signedIn ? (
-              <Link href={appHref} className="marketing-cta">
+              <Link href={appHref} className="marketing-cta is-primary">
                 {locale === "fa" ? "رفتن به صف" : "Open the queue"}
               </Link>
             ) : (
@@ -82,11 +104,22 @@ export function Landing({ locale, signedIn }: { locale: Locale; signedIn: boolea
                 <Link href={loginHref} className="mkt-signin">
                   {t.nav.signIn}
                 </Link>
-                <Link href={signupHref} className="marketing-cta">
+                <Link href={signupHref} className="marketing-cta is-primary">
                   {t.cta.primary}
                 </Link>
               </>
             )}
+            <details className="mkt-mobile">
+              <summary aria-label={locale === "fa" ? "فهرست" : "Menu"}>
+                <span aria-hidden="true" />
+              </summary>
+              <nav>
+                <a href="#value">{t.nav.value}</a>
+                <a href="#how">{t.nav.how}</a>
+                <a href="#faq">{t.nav.faq}</a>
+                <Link href={loginHref}>{t.nav.signIn}</Link>
+              </nav>
+            </details>
           </div>
         </div>
       </header>
@@ -110,51 +143,87 @@ export function Landing({ locale, signedIn }: { locale: Locale; signedIn: boolea
             <p className="mkt-micro">{t.hero.micro}</p>
           </div>
 
-          <aside className="mkt-specimen" aria-label={t.specimen.title}>
-            <div className="mkt-specimen-head">
-              <span>{t.specimen.title}</span>
-              <span className="mkt-specimen-live">
-                <i aria-hidden="true" />
-                {locale === "fa" ? "زنده" : "live"}
-              </span>
-            </div>
-            <ul className="mkt-rows">
-              {rows.map((row) => (
-                <li key={row.ref} className="mkt-row">
-                  <span className={`mkt-mark ${row.late ? "is-late" : ""}`} aria-hidden="true" />
-                  <span className="mkt-row-who">
-                    <b>{row.name}</b>
-                    <small className="mono ltr">{row.ref}</small>
-                  </span>
-                  <span className="mkt-row-why">{row.why}</span>
-                  <span className="mkt-row-next">{row.next}</span>
-                  <span className={`mkt-row-due ${row.late ? "is-late" : ""}`}>
-                    {row.due}
-                    <small>{row.tag}</small>
-                  </span>
-                </li>
-              ))}
-            </ul>
-            <div className="mkt-witness">
-              <p>
-                {locale === "fa"
-                  ? "«واریز کردم، کد رهگیری رو می‌فرستید؟ آدرسم هم عوض شده…»"
-                  : "“I paid — will you send the tracking code? My address changed…”"}
-              </p>
-              <div className="mkt-witness-marks">
-                <span className="mkt-hl">
-                  {locale === "fa" ? "واریز کردم" : "I paid"}
-                </span>
-                <span className="mkt-hl">
-                  {locale === "fa" ? "آدرسم هم عوض شده" : "my address changed"}
-                </span>
-                <span className="mkt-witness-note">
-                  {locale === "fa" ? "شاهدِ هر پیشنهاد" : "the witness for each proposal"}
+          <div className="mkt-specimen-wrap">
+            <aside className="mkt-specimen" aria-label={t.specimen.title}>
+              <div className="mkt-specimen-head">
+                <span className="mkt-specimen-title">{t.specimen.title}</span>
+                <span className="mkt-specimen-live">
+                  <i aria-hidden="true" />
+                  {locale === "fa" ? "زنده" : "live"}
                 </span>
               </div>
-            </div>
-            <p className="mkt-specimen-note">{t.specimen.note}</p>
-          </aside>
+
+              <p className="mkt-specimen-counts">
+                <b>۹</b> {locale === "fa" ? "کار باز" : "open"}
+                <span aria-hidden="true">·</span>
+                <b className="is-hot">۳</b> {locale === "fa" ? "عقب‌افتاده" : "overdue"}
+                <span aria-hidden="true">·</span>
+                <b>۱</b> {locale === "fa" ? "نیازمند بررسی" : "needs review"}
+              </p>
+
+              <ul className="mkt-rows">
+                {rows.map((row) => (
+                  <li key={row.ref} className="mkt-row" data-selected={row.selected ? "true" : undefined}>
+                    <span className={`mkt-mark ${row.late ? "is-late" : ""}`} aria-hidden="true" />
+                    <span className="mkt-row-who">
+                      <b>{row.name}</b>
+                      <small className="mono ltr">{row.ref}</small>
+                    </span>
+                    <span className="mkt-row-chips">
+                      {row.chips.map((chip) => (
+                        <span key={chip} className="mkt-chip">
+                          {chip}
+                        </span>
+                      ))}
+                    </span>
+                    <span className="mkt-row-next">{row.next}</span>
+                    <span className={`mkt-row-due ${row.late ? "is-late" : ""}`}>
+                      {row.due}
+                      <small>{row.tag}</small>
+                    </span>
+                  </li>
+                ))}
+              </ul>
+
+              <div className="mkt-thread">
+                <div className="mkt-thread-head">
+                  <span className="mkt-thread-who">{rows[0].name}</span>
+                  <span className="mkt-thread-meta">
+                    {locale === "fa" ? "۲۱:۰۴ · پیام مشتری" : "21:04 · inbound"}
+                  </span>
+                </div>
+                <p className="mkt-thread-text">
+                  {locale === "fa"
+                    ? "«واریز کردم، کد رهگیری رو می‌فرستید؟ آدرسم هم عوض شده، هنوز نفرستادید؟»"
+                    : "“I paid, will you send the tracking code? My address changed and it still hasn't shipped.”"}
+                </p>
+                <div className="mkt-thread-marks">
+                  <span className="mkt-hl">{locale === "fa" ? "واریز کردم" : "I paid"}</span>
+                  <span className="mkt-hl">{locale === "fa" ? "آدرسم هم عوض شده" : "my address changed"}</span>
+                  <span className="mkt-thread-note">
+                    {locale === "fa" ? "شاهدِ هر پیشنهاد" : "the witness for each proposal"}
+                  </span>
+                </div>
+              </div>
+
+              <div className="mkt-states">
+                <span className="mkt-state">
+                  {locale === "fa" ? "سفارش" : "order"}
+                  <b>{locale === "fa" ? "تأیید شده" : "confirmed"}</b>
+                </span>
+                <span className="mkt-state is-hot">
+                  {locale === "fa" ? "پرداخت" : "payment"}
+                  <b>{locale === "fa" ? "اعلام‌شده" : "claimed"}</b>
+                </span>
+                <span className="mkt-state">
+                  {locale === "fa" ? "ارسال" : "shipment"}
+                  <b>{locale === "fa" ? "در آماده‌سازی" : "preparing"}</b>
+                </span>
+              </div>
+
+              <p className="mkt-specimen-note">{t.specimen.note}</p>
+            </aside>
+          </div>
         </section>
 
         <section className="mkt-section" id="value" aria-labelledby="value-title">

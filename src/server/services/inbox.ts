@@ -613,6 +613,12 @@ export async function previewReply(ctx: SessionContext, orderId: string): Promis
   // Another tenant's order id answers exactly like a missing one.
   if (!order) throw errors.notFound("سفارش پیدا نشد.");
 
+  const settings = await prisma.tenantSettings.findUnique({
+    where: { tenantId },
+    select: { shippingPaused: true },
+  });
+  const shippingPaused = settings?.shippingPaused ?? false;
+
   const shipment = order.shipments[0] ?? null;
   const recentMessages = await prisma.message.findMany({
     where: { tenantId, conversation: { customerId: order.customerId } },
@@ -650,7 +656,7 @@ export async function previewReply(ctx: SessionContext, orderId: string): Promis
     addressMissing: addressChangeRequested && statedAddress === null,
     addressChangeAfterShipment:
       addressChangeRequested && (shipment?.status === "shipped" || shipment?.status === "delivered"),
-    postingPaused: ctx.settings.postingPaused,
+    postingPaused: ctx.settings.postingPaused || shippingPaused,
   });
 
   return {
@@ -659,6 +665,6 @@ export async function previewReply(ctx: SessionContext, orderId: string): Promis
     body: preview.body,
     // A paused shop can still read the sentence, but the screen must not offer it
     // as something that can be sent right now.
-    allowed: preview.allowed && !ctx.settings.postingPaused,
+    allowed: preview.allowed && !ctx.settings.postingPaused && !shippingPaused,
   };
 }

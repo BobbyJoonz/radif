@@ -870,3 +870,134 @@ button[aria-disabled="true"] {
   .usermenu-id { display: none; }
   .usermenu-trigger { min-height: 32px; }
 }
+
+/* ═══════════════ polished marketing header ═══════════════ */
+.mkt-head { background: color-mix(in oklab, var(--background) 94%, transparent); }
+.mkt-head-inner { max-width: 1280px; height: 72px; gap: var(--s5); }
+.mkt-head-rule { width: 1px; height: 22px; background: var(--rule); flex: none; }
+.mkt-brand { padding: 6px 2px; border-radius: var(--r-1); }
+.mkt-brand:focus-visible { outline: 2px solid var(--primary); outline-offset: 4px; }
+.mkt-nav { gap: var(--s2); }
+.mkt-nav a {
+  position: relative; display: inline-flex; align-items: center;
+  min-height: 40px; padding: 0 var(--s3);
+  font-size: var(--t-small); color: var(--muted-foreground);
+  border-radius: var(--r-1);
+}
+.mkt-nav a::after {
+  content: ""; position: absolute; inset-inline: var(--s3); bottom: 6px; height: 2px;
+  background: var(--primary); border-radius: 2px;
+  transform: scaleX(0); transform-origin: inline-start;
+  transition: transform var(--dur-2) var(--ease-out);
+}
+.mkt-nav a:hover, .mkt-nav a:focus-visible { color: var(--foreground); }
+.mkt-nav a:hover::after, .mkt-nav a:focus-visible::after { transform: scaleX(1); }
+.mkt-head-spacer { flex: 1; }
+.mkt-actions { gap: var(--s2); margin-inline-start: 0; }
+.mkt-lang { min-width: 36px; min-height: 32px; }
+.mkt-signin { padding: 0 var(--s3); border-radius: var(--r-1); }
+.mkt-signin:hover { background: var(--surface); }
+
+/* no-JS mobile menu */
+.mkt-mobile { display: none; position: relative; }
+.mkt-mobile > summary {
+  list-style: none; cursor: pointer;
+  width: 40px; height: 40px; display: grid; place-items: center;
+  border: 1px solid var(--border); border-radius: var(--r-1);
+}
+.mkt-mobile > summary::-webkit-details-marker { display: none; }
+.mkt-mobile > summary span,
+.mkt-mobile > summary span::before,
+.mkt-mobile > summary span::after {
+  content: ""; display: block; width: 16px; height: 2px; background: var(--foreground); border-radius: 2px;
+}
+.mkt-mobile > summary span { position: relative; }
+.mkt-mobile > summary span::before { position: absolute; top: -5px; }
+.mkt-mobile > summary span::after { position: absolute; top: 5px; }
+.mkt-mobile[open] > summary { border-color: var(--primary); }
+.mkt-mobile nav {
+  position: absolute; inset-inline-end: 0; top: calc(100% + 8px); z-index: 40;
+  min-width: 200px; padding: var(--s2);
+  background: var(--surface-raised); border: 1px solid var(--border);
+  border-radius: var(--r-2); box-shadow: var(--shadow-sheet);
+  display: grid; gap: 2px;
+}
+.mkt-mobile nav a {
+  display: flex; align-items: center; min-height: 42px; padding: 0 var(--s3);
+  border-radius: var(--r-1); font-size: var(--t-small);
+}
+.mkt-mobile nav a:hover { background: var(--surface); }
+
+/* ═══════════════ the specimen as a miniature of the product ═══════════════ */
+.mkt-specimen-wrap { position: relative; }
+.mkt-specimen-wrap::before {
+  content: ""; position: absolute; inset: 14px -14px -14px 14px;
+  border: 1px solid var(--rule-soft); border-radius: var(--r-3);
+  background: color-mix(in oklab, var(--surface) 55%, transparent);
+}
+.mkt-specimen { position: relative; border-radius: var(--r-3); }
+.mkt-specimen-head { padding: 12px 16px; }
+.mkt-specimen-title { font-size: var(--t-small); font-weight: 600; color: var(--foreground); }
+.mkt-specimen-live { font-size: 11px; }
+
+.mkt-specimen-counts {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px;
+  padding: 0 16px 12px; font-size: var(--t-meta); color: var(--muted-foreground);
+}
+.mkt-specimen-counts b { color: var(--foreground); font-weight: 600; font-variant-numeric: tabular-nums; }
+.mkt-specimen-counts b.is-hot { color: var(--primary); }
+.mkt-specimen-counts span { opacity: .6; }
+
+.mkt-row {
+  grid-template-columns: 3px minmax(0, 1fr) minmax(0, 1.15fr) minmax(0, 1fr) 76px;
+  gap: var(--s3); padding: 12px 16px; align-items: center;
+  transition: background-color var(--dur-1) var(--ease-out);
+}
+.mkt-row:hover { background: color-mix(in oklab, var(--surface-raised) 55%, transparent); }
+.mkt-row[data-selected="true"] { background: var(--surface-raised); }
+.mkt-row[data-selected="true"] .mkt-mark { background: var(--primary); height: 34px; }
+.mkt-row-chips { display: flex; flex-wrap: wrap; gap: 4px; min-width: 0; }
+.mkt-chip {
+  font-size: 11px; line-height: 1.6; color: var(--muted-foreground);
+  border: 1px solid var(--rule); border-radius: var(--r-pill);
+  padding: 0 7px; white-space: nowrap;
+}
+.mkt-row-next { font-size: 12px; color: var(--foreground); line-height: 1.5; }
+.mkt-row-due { font-size: 12px; }
+.mkt-row-due small { font-size: 11px; }
+.mkt-row-who small { font-size: 11px; }
+
+.mkt-thread { margin: 0 16px 12px; padding: 12px 14px; background: var(--background); border: 1px solid var(--rule); border-radius: var(--r-2); }
+.mkt-thread-head { display: flex; align-items: baseline; justify-content: space-between; gap: var(--s2); }
+.mkt-thread-who { font-size: var(--t-meta); font-weight: 600; }
+.mkt-thread-meta { font-size: 11px; color: var(--muted-foreground); font-variant-numeric: tabular-nums; }
+.mkt-thread-text { margin-top: 6px; font-size: 13px; line-height: 1.9; }
+.mkt-thread-marks { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2) var(--s3); margin-top: 8px; }
+.mkt-thread-note { font-size: 11px; color: var(--muted-foreground); }
+
+.mkt-states { display: flex; border-top: 1px solid var(--rule-soft); }
+.mkt-state {
+  flex: 1; display: grid; gap: 1px; padding: 10px 14px;
+  font-size: 11px; color: var(--muted-foreground);
+}
+.mkt-state + .mkt-state { border-inline-start: 1px solid var(--rule-soft); }
+.mkt-state b { font-size: var(--t-meta); font-weight: 600; color: var(--foreground); }
+.mkt-state.is-hot b { color: var(--primary); }
+.mkt-specimen-note { padding: 10px 16px 14px; font-size: 11px; }
+
+@media (max-width: 1100px) {
+  .mkt-specimen-wrap::before { display: none; }
+}
+@media (max-width: 900px) {
+  .mkt-head-inner { height: 60px; gap: var(--s3); }
+  .mkt-nav, .mkt-head-rule { display: none; }
+  .mkt-mobile { display: block; }
+  .mkt-signin { display: none; }
+  .mkt-actions .marketing-cta { min-height: 38px; padding: 0 var(--s4); font-size: 12px; }
+  .mkt-row { grid-template-columns: 3px minmax(0, 1fr) auto; row-gap: 4px; }
+  .mkt-row-chips { grid-column: 2 / 4; grid-row: 2; }
+  .mkt-row-next { grid-column: 2 / 3; grid-row: 3; }
+  .mkt-row-due { grid-column: 3; grid-row: 1; text-align: end; }
+  .mkt-states { flex-direction: column; }
+  .mkt-state + .mkt-state { border-inline-start: 0; border-top: 1px solid var(--rule-soft); }
+}
