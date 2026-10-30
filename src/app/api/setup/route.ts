@@ -29,6 +29,9 @@ async function run(request: Request) {
   }
 
   const wantsEnrich = new URL(request.url).searchParams.get("enrich") === "1";
+  // Close the schema gap first: a database provisioned by an earlier build can
+  // be missing columns that later migrations added, and seeding would crash.
+  await applyMigrations();
   const hasSchema = await schemaExists();
   if (hasSchema) {
     // A deploy can land with the tables already created (a build step ran
