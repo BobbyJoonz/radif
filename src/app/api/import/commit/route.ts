@@ -1,6 +1,6 @@
 import { env } from "@/lib/env";
 import { handler, ok } from "@/server/http";
-import { requireSession } from "@/server/session";
+import { requireRole } from "@/server/session";
 import { commitImport, importInputSchema } from "@/server/services/import";
 import { enforceRateLimit } from "../../_lib/rate-limit";
 import { readJsonBody } from "../../_lib/request";
@@ -16,7 +16,7 @@ import { readJsonBody } from "../../_lib/request";
 export const dynamic = "force-dynamic";
 
 export const POST = handler(async (request: Request) => {
-  const ctx = await requireSession();
+  const ctx = await requireRole("owner");
   enforceRateLimit(`import:${ctx.user.id}`, env.RATE_LIMIT_IMPORT_PER_MIN);
 
   const body = importInputSchema.parse(await readJsonBody(request));
