@@ -60,3 +60,26 @@ export async function recoverPendingAnalyses(options: { limit?: number; now?: Da
 
   return enqueued;
 }
+
+/**
+ * Stale-lease reaper (audit: some jobs stayed `running` forever).
+ *
+ * A worker that dies leaves `status=running` with a lease that never renews. The
+ * lease is the promise that another worker may take the job; without this sweep
+ * the promise was never enforced and the job was invisible to every queue.
+ *
+ * Exhausted attempts are dead-lettered (visible, not looped); the rest go back to
+ * pending with the reason recorded. Idempotent: it only touches expired leases.
+ */
+export async function reapExpiredLeases(now = new Date()): Promise<{ dead: number; requeued: number }> {
+  const expired = { status: "running" as const, leaseUntil: { lt: now } };
+  const dead = await prisma.job.updateMany({
+    where: { ...expired, attempts: { gte: prisma.job.fields.maxAttempts } },
+    data: { status: "dead", finishedAt: now, lastError: "lease_expired_max_attempts", leaseOwner: null, leaseUntil: null },
+  });
+  const requeued = await prisma.job.updateMany({
+    where: { ...expired, attempts: { lt: prisma.job.fields.maxAttempts } },
+    data: { status: "pending", lastError: "lease_expired", leaseOwner: null, leaseUntil: null },
+  });
+  return { dead: dead.count, requeued: requeued.count };
+}

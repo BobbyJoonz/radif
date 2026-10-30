@@ -5,6 +5,7 @@ import { env } from "@/lib/env";
 import { claimJobs } from "./claim";
 import { runJob } from "./handlers";
 import { recoverPendingAnalyses } from "./recover";
+import { reapExpiredLeases } from "./recover";
 
 /**
  * The worker process — `pnpm worker` (CONTRACTS §6 rule 13, brief §6).

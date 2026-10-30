@@ -4,6 +4,7 @@ import { prisma } from "@/server/db";
 import { claimJobs } from "./claim";
 import { runJob, type JobOutcome } from "./handlers";
 import { recoverPendingAnalyses } from "./recover";
+import { reapExpiredLeases } from "./recover";
 
 /**
  * `pnpm worker:once` — drain the queue and exit.
