@@ -1183,3 +1183,9 @@ button[aria-disabled="true"] {
 
 /* tags and status words share one box */
 .chip, .mkt-chip, .rolepicker-item-hint, .due-tag { font-size: var(--f-micro); }
+
+/* A ledger table may be wider than a phone, but must not be cut off: it scrolls
+   inside its own card (measured: /fa/evaluation had five clipped cells at 390px). */
+@media (max-width: 480px) {
+  main table { display: block; overflow-x: auto; max-width: 100%; -webkit-overflow-scrolling: touch; }
+}

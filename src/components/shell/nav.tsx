@@ -13,11 +13,15 @@ function stripLocale(pathname: string): string {
   return pathname.replace(/^\/(fa|en)(?=\/|$)/, "") || "/";
 }
 
-function isActive(pathname: string, href: string): boolean {
-  const here = stripLocale(pathname);
+// A section's menu key is not always its route: the inbox lives at /conversations.
+// Without this the current section is unmarked on that screen (aria-current null).
+const ROUTE_ALIASES: Record<string, string> = { inbox: "conversations" };
+
+function isActive(pathname: string, href: string): boolean {  const here = stripLocale(pathname);
   if (href === "") return here === "/";
-  return here === `/${href}` || here.startsWith(`/${href}/`);
-}
+  if (here === `/${href}` || here.startsWith(`/${href}/`)) return true;
+  const alias = ROUTE_ALIASES[href];
+  return alias ? here === `/${alias}` || here.startsWith(`/${alias}/`) : false;}
 
 export function TopNav({
   items,
