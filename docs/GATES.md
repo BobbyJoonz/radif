@@ -138,3 +138,16 @@ node .work/probe-instance2.ts             # clone: 13/5/16/11/5, template untouc
 node .work/e2e-nav2.mjs                   # owner vs operator menus + denial
 node .work/e2e-demo.mjs                   # personal demo click -> /fa/today
 ```
+
+## مدیر پلتفرم (اصل چهارم) — اثبات‌شده
+
+| گام | نتیجه |
+|---|---|
+| ورود مدیر پلتفرم (`ops@radif.demo`) | ۲۰۰ |
+| `/fa/admin` برای مدیر | **۲۰۰** · «سلامت سامانه» رندر شد · بدون شماره/آدرس/ایمیل فروشگاه‌ها |
+| `/fa/admin` برای **مالک** | میز مدیر **رندر نشد** (به `/today`) |
+| `/fa/admin` برای **ناشناس** | میز مدیر **رندر نشد** (به ورود) |
+| `scripts/make-admin.mjs` (با `pg`) | اکانت ساخت → ورود ۲۰۰ → میز ۲۰۰ · سپس حذف شد |
+
+نکته: در این نسخهٔ Next، `redirect()` از server component پاسخ ۲۰۰ با محتوای صفحهٔ مقصد می‌دهد؛
+معیار درست «رندر نشدن میز» است، نه کد وضعیت.
