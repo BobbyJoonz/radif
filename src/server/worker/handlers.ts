@@ -28,7 +28,7 @@ import { UnrecoverableJob, errorCodeOf, isRetryableError } from "./errors";
  * records its own state before it throws (see `analyze.ts`).
  */
 
-export type JobOutcome = "succeeded" | "retry" | "dead";
+export type JobOutcome = "succeeded" | "retry" | "dead" | "lease-lost";
 
 /** A job may legitimately take longer than the default claim window. */
 const WORKER_LEASE_MS = Math.max(DEFAULT_LEASE_MS, 120_000);
@@ -43,7 +43,10 @@ export async function runJob(job: ClaimedJob, workerId: string): Promise<JobOutc
 
   try {
     await dispatch(job);
-    await completeJob(job.id);
+    if (!(await completeJob(job.id, workerId))) {
+      console.warn(`[worker] lease-lost ${label}: another worker owns this job now`);
+      return "lease-lost";
+    }
     console.log(`[worker] ok ${label} attempt=${job.attempts} ${Date.now() - startedAt}ms`);
     return "succeeded";
   } catch (error) {
@@ -53,7 +56,10 @@ export async function runJob(job: ClaimedJob, workerId: string): Promise<JobOutc
 
     if (retryable && attemptsLeft) {
       const runAt = new Date(Date.now() + backoffMs(job.attempts));
-      await retryJob(job.id, { error: message, runAt });
+      if (!(await retryJob(job.id, { error: message, runAt, owner: workerId }))) {
+        console.warn(`[worker] lease-lost ${label}: not retrying, another worker owns this job`);
+        return "lease-lost";
+      }
       console.warn(
         `[worker] retry ${label} attempt=${job.attempts}/${job.maxAttempts} in ${Math.round(
           (runAt.getTime() - Date.now()) / 1000,
@@ -62,7 +68,10 @@ export async function runJob(job: ClaimedJob, workerId: string): Promise<JobOutc
       return "retry";
     }
 
-    await failJob(job.id, { error: message, status: "dead" });
+    if (!(await failJob(job.id, { error: message, status: "dead", owner: workerId }))) {
+      console.warn(`[worker] lease-lost ${label}: not marking dead, another worker owns this job`);
+      return "lease-lost";
+    }
     console.error(
       `[worker] dead ${label} attempt=${job.attempts}/${job.maxAttempts} · ${errorCodeOf(error)} · ${message}`,
     );

@@ -112,12 +112,20 @@ export async function extendLease(
   return result.count > 0;
 }
 
-/** The job finished and did what it promised. */
-export async function completeJob(jobId: string, now = new Date()): Promise<void> {
-  await prisma.job.updateMany({
-    where: { id: jobId },
+/**
+ * The job finished and did what it promised.
+ *
+ * `owner` is a fence, not a label: a worker whose lease expired while it was busy
+ * has already lost the job to another worker, and its late "done" must not mark
+ * that second worker's in-flight attempt as succeeded. Fenced updates return
+ * whether the caller still owned the lease.
+ */
+export async function completeJob(jobId: string, owner: string, now = new Date()): Promise<boolean> {
+  const result = await prisma.job.updateMany({
+    where: { id: jobId, status: "running", leaseOwner: owner },
     data: { status: "succeeded", finishedAt: now, leaseOwner: null, leaseUntil: null, lastError: null },
   });
+  return result.count > 0;
 }
 
 /**
@@ -126,10 +134,10 @@ export async function completeJob(jobId: string, now = new Date()): Promise<void
  */
 export async function retryJob(
   jobId: string,
-  input: { error: string; runAt: Date; now?: Date },
-): Promise<void> {
-  await prisma.job.updateMany({
-    where: { id: jobId },
+  input: { error: string; runAt: Date; owner: string; now?: Date },
+): Promise<boolean> {
+  const result = await prisma.job.updateMany({
+    where: { id: jobId, leaseOwner: input.owner },
     data: {
       status: "pending",
       leaseOwner: null,
@@ -138,15 +146,16 @@ export async function retryJob(
       runAt: input.runAt,
     },
   });
+  return result.count > 0;
 }
 
 /** Out of attempts (or a failure retrying cannot fix): stop, keep the error for a human. */
 export async function failJob(
   jobId: string,
-  input: { error: string; status?: "failed" | "dead"; now?: Date },
-): Promise<void> {
-  await prisma.job.updateMany({
-    where: { id: jobId },
+  input: { error: string; status?: "failed" | "dead"; owner: string; now?: Date },
+): Promise<boolean> {
+  const result = await prisma.job.updateMany({
+    where: { id: jobId, leaseOwner: input.owner },
     data: {
       status: input.status ?? "dead",
       leaseOwner: null,
@@ -155,6 +164,7 @@ export async function failJob(
       finishedAt: input.now ?? new Date(),
     },
   });
+  return result.count > 0;
 }
 
 /**

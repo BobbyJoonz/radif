@@ -33,7 +33,7 @@ function summaryLine(startedAt: number, counts: Record<JobOutcome, number>, reco
 
 async function main(): Promise<void> {
   const startedAt = Date.now();
-  const counts: Record<JobOutcome, number> = { succeeded: 0, retry: 0, dead: 0 };
+  const counts: Record<JobOutcome, number> = { succeeded: 0, retry: 0, dead: 0, "lease-lost": 0 };
 
   const recovered = await recoverPendingAnalyses();
   if (recovered > 0) {
