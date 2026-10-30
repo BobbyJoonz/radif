@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { prisma } from "@/server/db";
 import { allowedActions, nextAction, type CaseFacts } from "@/server/domain/next-action";
-import { claimTask, getWorkdesk } from "@/server/services/workdesk";
+import { assignTask, claimTask, getWorkdesk } from "@/server/services/workdesk";
 import { resetDatabase } from "./helpers/db";
 import { createCustomer, createOperator, createOrder, createTenant, expectApiError, type TestTenant } from "./helpers/fixtures";
 
@@ -124,5 +124,33 @@ describe("workdesk (real database)", () => {
 
     const stored = await prisma.task.findUnique({ where: { id: row.id }, select: { assigneeId: true } });
     expect(stored?.assigneeId).toBe(toranj.userId);
+  });
+
+  it("lets an owner delegate, and refuses everyone else", async () => {
+    const operator = await createOperator(toranj);
+    const row = await task({ reasonCode: "payment_mismatch" });
+
+    await assignTask(toranj.ctx, row.id, operator.userId);
+    const assigned = await prisma.task.findUnique({ where: { id: row.id }, select: { assigneeId: true } });
+    expect(assigned?.assigneeId).toBe(operator.userId);
+
+    await expectApiError(() => assignTask(operator.ctx, row.id, operator.userId), { status: 403, code: "forbidden" });
+  });
+
+  it("never assigns work to somebody outside the shop", async () => {
+    const row = await task({ reasonCode: "payment_mismatch" });
+    await expectApiError(() => assignTask(toranj.ctx, row.id, "user_stranger"), { status: 404, code: "not_found" });
+  });
+
+  it("clears an assignee and refuses to delegate a closed task", async () => {
+    const operator = await createOperator(toranj);
+    const row = await task({ reasonCode: "payment_mismatch", assigneeId: operator.userId });
+
+    await assignTask(toranj.ctx, row.id, null);
+    const cleared = await prisma.task.findUnique({ where: { id: row.id }, select: { assigneeId: true } });
+    expect(cleared?.assigneeId).toBeNull();
+
+    await prisma.task.update({ where: { id: row.id }, data: { status: "done", closedAt: new Date() } });
+    await expectApiError(() => assignTask(toranj.ctx, row.id, operator.userId), { status: 409, code: "conflict" });
   });
 });

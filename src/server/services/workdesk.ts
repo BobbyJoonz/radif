@@ -194,3 +194,51 @@ export async function claimTask(ctx: SessionContext, taskId: string): Promise<{ 
   });
   return { assigneeId: ctx.user.id };
 }
+
+/**
+ * Delegation. Only an owner may hand work to somebody else; an operator can take
+ * unassigned work (claimTask), but cannot re-assign a colleague. The assignee must
+ * already belong to this shop: assignment is not an invitation.
+ */
+export async function assignTask(
+  ctx: SessionContext,
+  taskId: string,
+  assigneeId: string | null,
+): Promise<{ assigneeId: string | null }> {
+  if (ctx.role !== "owner") {
+    throw errors.forbidden("واگذاری کار فقط با نقش «مالک» انجام می‌شود.");
+  }
+
+  const task = await prisma.task.findFirst({
+    where: { id: taskId, tenantId: ctx.tenant.id },
+    select: { id: true, status: true, assigneeId: true },
+  });
+  if (!task) throw errors.notFound("این کار پیدا نشد.");
+  if (task.status === "done") throw errors.conflict("این کار بسته شده است و واگذاری نمی‌شود.");
+
+  if (assigneeId) {
+    const membership = await prisma.membership.findFirst({
+      where: { tenantId: ctx.tenant.id, userId: assigneeId },
+      select: { userId: true },
+    });
+    if (!membership) throw errors.notFound("این همکار در این فروشگاه عضو نیست.");
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.task.update({ where: { id: task.id }, data: { assigneeId } });
+    await tx.auditEvent.create({
+      data: {
+        tenantId: ctx.tenant.id,
+        actorType: "user",
+        actorId: ctx.user.id,
+        action: "task.assigned",
+        entityType: "Task",
+        entityId: task.id,
+        before: { assigneeId: task.assigneeId },
+        after: { assigneeId },
+      },
+    });
+  });
+
+  return { assigneeId };
+}
