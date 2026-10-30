@@ -1210,3 +1210,61 @@ button[aria-disabled="true"] {
 @media (scripting: none) {
   .mkt-h1 span, [data-motion] { opacity: 1 !important; filter: none !important; transform: none !important; }
 }
+
+/* ── English typography ───────────────────────────────────────────────────────
+   Peyda is the Persian face; in English it is replaced by Inter (variable, tabular
+   figures, drawn for dense UI). Overriding --font-ui on the document cascades to
+   every component that already reads it, so nothing needs a second class. */
+html[lang="en"] {
+  --font-ui: var(--font-latin), "Inter Fallback", system-ui, "Segoe UI", Roboto, Arial, sans-serif;
+}
+html[lang="en"] body {
+  letter-spacing: -0.006em;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+html[lang="en"] h1, html[lang="en"] h2, html[lang="en"] h3, html[lang="en"] h4 {
+  letter-spacing: -0.024em;
+  font-weight: 700;
+}
+html[lang="en"] h1 { font-weight: 800; }
+/* machine values stay monospace in both languages */
+html[lang="en"] .mono, html[lang="en"] code, html[lang="en"] kbd, html[lang="en"] samp {
+  font-family: var(--font-mono);
+  letter-spacing: 0.01em;
+}
+/* a ledger column of numbers must not dance */
+html[lang="en"] .nums, html[lang="en"] td, html[lang="en"] th, html[lang="en"] .qrowTime {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── the workdesk: one row per case ───────────────────────────────────────── */
+.workdesk { border-bottom: 1px solid var(--rule); padding-bottom: var(--s4); margin-bottom: var(--s5); }
+.workdesk-head { display: flex; align-items: baseline; gap: var(--s2); padding-bottom: var(--s2); }
+.workdesk-head h2 { font-size: var(--t-h2); font-weight: 700; }
+.workdesk-count { font-size: var(--t-meta); color: var(--muted-foreground); font-variant-numeric: tabular-nums; }
+.workdesk-list { list-style: none; margin: 0; padding: 0; display: grid; }
+.wdcase {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--s3) var(--s4);
+  align-items: center; padding: 12px 0; border-top: 1px solid var(--rule-soft);
+}
+.wdcase-main { display: grid; gap: 2px; min-width: 0; }
+.wdcase-who { display: flex; align-items: baseline; gap: var(--s2); font-size: var(--t-small); font-weight: 600; color: var(--foreground); }
+.wdcase-who:hover { text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--primary); }
+.wdcase-ref { font-size: var(--t-micro); color: var(--muted-foreground); font-weight: 400; }
+.wdcase-why { font-size: var(--t-meta); color: var(--primary); }
+.wdcase-meta { display: flex; flex-wrap: wrap; gap: var(--s3); font-size: var(--t-micro); color: var(--muted-foreground); }
+.wdcase-end { display: flex; align-items: center; gap: var(--s2); justify-self: end; }
+.wdcase-action {
+  display: inline-flex; align-items: center; height: var(--h-control); padding: 0 12px;
+  border: 1px solid var(--border); border-radius: var(--r-1);
+  font-size: var(--t-meta); color: var(--foreground); white-space: nowrap;
+}
+.wdcase-action:hover { border-color: var(--muted-foreground); }
+.wdcase-claim { white-space: nowrap; }
+.wdcase-note { font-size: var(--t-micro); color: var(--critical); }
+.workdesk-empty, .workdesk-foot { padding: var(--s3) 0 0; font-size: var(--t-meta); color: var(--muted-foreground); }
+@media (max-width: 720px) {
+  .wdcase { grid-template-columns: 1fr; }
+  .wdcase-end { justify-self: stretch; justify-content: space-between; }
+}

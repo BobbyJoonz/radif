@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import { ReplayButton } from "@/components/today/replay-button";
 import { SignalStrip } from "@/components/today/signal-strip";
 import { routes } from "@/lib/routes";
+import { WorkdeskPanel } from "@/components/screens/workdesk-panel";
+import { getWorkdesk, type WorkdeskView } from "@/server/services/workdesk";
 import { getDictionary } from "@/i18n";
 import { isLocale, withLocale, type Locale } from "@/i18n/config";
 import { formatFullDate, formatNumber, formatRelative, formatTime, localizeDigits } from "@/i18n/format";
@@ -58,6 +60,15 @@ export default async function TodayPage({
 
   const data = await getToday(ctx, { assignee, due });
 
+  const rawView = typeof sp.view === "string" ? sp.view : "";
+  const allowedViews: WorkdeskView[] = ctx.role === "owner" ? ["decisions", "all", "unassigned", "waiting"] : ["mine", "unassigned", "waiting"];
+  const view: WorkdeskView = (allowedViews as string[]).includes(rawView)
+    ? (rawView as WorkdeskView)
+    : ctx.role === "owner"
+      ? "decisions"
+      : "mine";
+  const workdesk = await getWorkdesk(ctx, view);
+
   // Filters live in the URL, so a view is shareable and the back button works.
   const href = (next: { assignee?: string; due?: string }) => {
     const q = new URLSearchParams();
@@ -82,6 +93,8 @@ export default async function TodayPage({
 
   return (
     <div className="today">
+      <WorkdeskPanel locale={locale} cases={workdesk} dict={dict} />
+
       <div className="today-head">
         <div>
           <h1 className="today-h1">{dict.today.title}</h1>
