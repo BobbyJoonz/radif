@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ReplayButton } from "@/components/today/replay-button";
 import { SignalStrip } from "@/components/today/signal-strip";
+import { routes } from "@/lib/routes";
 import { getDictionary } from "@/i18n";
 import { isLocale, withLocale, type Locale } from "@/i18n/config";
 import { formatFullDate, formatNumber, formatRelative, formatTime, localizeDigits } from "@/i18n/format";
@@ -73,10 +74,10 @@ export default async function TodayPage({
   const top = data.items[0];
   const topHref = top
     ? top.conversationId
-      ? `/${locale}/inbox?conversation=${top.conversationId}`
+      ? routes.inbox(locale, top.conversationId)
       : top.orderId
-        ? `/${locale}/orders/${top.orderId}`
-        : `/${locale}/tasks`
+        ? routes.orders(locale, top.orderId)
+        : routes.tasks(locale)
     : null;
 
   return (
@@ -220,10 +221,10 @@ export default async function TodayPage({
                 <tbody>
                   {data.items.map((row) => {
                     const href = row.conversationId
-                      ? `/${locale}/inbox?conversation=${row.conversationId}`
+                      ? routes.inbox(locale, row.conversationId)
                       : row.orderId
-                        ? `/${locale}/orders/${row.orderId}`
-                        : `/${locale}/tasks`;
+                        ? routes.orders(locale, row.orderId)
+                        : routes.tasks(locale);
                     return (
                       <tr key={row.taskId}>
                         <td className="cell-mark">
