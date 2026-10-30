@@ -483,7 +483,7 @@ export async function seedRichDemo(): Promise<{
   ];
   for (const task of tasks) {
     await prisma.task.upsert({
-      where: { id: task.id },
+      where: { tenantId_dedupeKey: { tenantId: T, dedupeKey: task.key } },
       update: {},
       create: {
         id: task.id,
@@ -506,7 +506,7 @@ export async function seedRichDemo(): Promise<{
   }
 
   await prisma.task.upsert({
-    where: { id: "task_done_1" },
+    where: { tenantId_dedupeKey: { tenantId: T, dedupeKey: "shipment:order_1031" } },
     update: {},
     create: {
       id: "task_done_1",
