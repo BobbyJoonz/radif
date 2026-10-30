@@ -118,6 +118,7 @@ model Tenant {
   jobs           Job[]
   outbound       OutboundMessage[]
   auditEvents    AuditEvent[]
+  invitations   Invitation[]
 }
 
 model TenantSettings {
@@ -151,6 +152,27 @@ model Membership {
 
   @@unique([tenantId, userId])
   @@index([userId])
+}
+
+/// A one-time, expiring invitation to join a shop.
+///
+/// Only the hash of the token is stored: a leaked database cannot be replayed into
+/// a membership. The invitation is bound to a tenant, a role and the intended
+/// email, so accepting it can never create a second shop or a different role.
+model Invitation {
+  id          String         @id @default(cuid())
+  tenantId    String
+  email       String
+  role        MembershipRole @default(operator)
+  tokenHash   String         @unique
+  expiresAt   DateTime
+  acceptedAt  DateTime?
+  invitedById String?
+  createdAt   DateTime       @default(now())
+  tenant      Tenant         @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, email])
+  @@index([expiresAt])
 }
 
 enum MembershipRole {
