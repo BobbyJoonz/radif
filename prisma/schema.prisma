@@ -38,6 +38,9 @@ model User {
   auditEvents      AuditEvent[]
   verifiedPayments PaymentClaim[] @relation("PaymentVerifiedBy")
   assignedTasks    Task[]         @relation("TaskAssignee")
+  /// Platform administration is a different principal from a shop member: it sees
+  /// metadata about the platform and never private shop content.
+  platformAdmin Boolean @default(false)
 }
 
 // Better Auth: session / account / verification — field names fixed by the library.
