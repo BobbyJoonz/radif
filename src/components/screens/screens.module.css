@@ -1461,3 +1461,36 @@
   justify-content: space-between; /* lockup ⟷ language */
   gap: var(--s3);
 }
+
+/* ── login: demo list, language switch, narrow layout ────────────────────────
+   • the two-column account row put role + "second shop" in an auto column; that
+     note is long enough to take the whole width, squeezing the email to zero so
+     its text painted over the note. Stack the lines; ellipsise the email.
+   • the language switch was a 17x20 inline link — below the 24px target floor.
+   • under 860px the 300px aside cannot sit beside the form without squeezing. */
+.accountBtn { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+.accountEmail { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.accountWho { min-width: 0; overflow-wrap: anywhere; }
+.passRow { flex-wrap: wrap; }
+.passValue { white-space: nowrap; }
+.langSwitchInline {
+  min-width: 32px;
+  min-height: 32px;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: var(--r-1);
+  color: var(--muted-foreground);
+  font-size: var(--t-micro);
+}
+.langSwitchInline:hover { color: var(--foreground); background: var(--surface); }
+
+@media (max-width: 860px) {
+  .loginWrap { grid-template-columns: minmax(0, 1fr); width: min(460px, 100%); gap: var(--s5); }
+  .loginAside {
+    border-inline-start: 0;
+    border-top: 1px solid var(--rule);
+    padding-inline-start: 0;
+    padding-block-start: var(--s4);
+  }
+}
