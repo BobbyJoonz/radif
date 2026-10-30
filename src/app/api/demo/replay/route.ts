@@ -14,7 +14,7 @@ export const dynamic = "force-dynamic";
 
 export const POST = handler(async () => {
   const ctx = await requireSession();
-  if (!isDemo) throw errors.forbidden("بازپخش نمایشی فقط در حالت demo فعال است.");
+  if (!isDemo()) throw errors.forbidden("بازپخش نمایشی فقط در حالت demo فعال است.");
 
   const messageId = await replaySampleMessage(ctx);
   return ok({ messageId });
