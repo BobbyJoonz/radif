@@ -9,8 +9,10 @@ import { handler, ok, errors } from "@/server/http";
  *
  * The identity already exists (Better Auth created it and set the session), so this
  * only needs the auth session — not a membership, which is exactly what it creates.
- * Idempotent by refusal: a user who already has a membership gets 409 instead of a
- * second shop nobody asked for.
+ * Idempotent by success, not by refusal (audit finding #2): registration already
+ * creates the identity *and* a placeholder shop, so a user who reaches this step
+ * twice must get the same answer, never a 409 that reads like a failure. The
+ * second call simply applies the name they chose to the placeholder shop.
  */
 export const dynamic = "force-dynamic";
 
@@ -29,9 +31,22 @@ export const POST = handler(async (request: Request) => {
 
   const body = Body.parse(await request.json());
 
-  const existing = await prisma.membership.findFirst({ where: { userId: session.user.id } });
+  const existing = await prisma.membership.findFirst({
+    where: { userId: session.user.id },
+    include: { tenant: { select: { id: true, nameFa: true } } },
+  });
   if (existing) {
-    return ok({ tenantId: existing.tenantId, alreadyMember: true }, { status: 409 });
+    // The placeholder shop was created at sign-up so the user can never be stuck in
+    // a login loop; here is where the name they actually chose replaces it.
+    const placeholder = existing.tenant.nameFa === "فروشگاه تازه";
+    if (placeholder && body.shopName) {
+      await prisma.tenant.update({
+        where: { id: existing.tenantId },
+        data: { nameFa: body.shopName, nameEn: body.shopName },
+      });
+      return ok({ tenantId: existing.tenantId, renamed: true, alreadyMember: true });
+    }
+    return ok({ tenantId: existing.tenantId, alreadyMember: true });
   }
 
   const created = await prisma.$transaction(async (tx) => {
