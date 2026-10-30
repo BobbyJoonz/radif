@@ -65,7 +65,7 @@ export default async function TodayPage({
     if (a) q.set("assignee", a);
     if (d) q.set("due", d);
     const qs = q.toString();
-    return `/${locale}${qs ? `?${qs}` : ""}`;
+    return `/${locale}/today${qs ? `?${qs}` : ""}`;
   };
   const now = new Date();
   const nowHour = hourIn(ctx.tenant.timezone, now);
