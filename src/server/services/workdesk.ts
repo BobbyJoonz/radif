@@ -23,6 +23,21 @@ import { allowedActions, nextAction, type ActionKey, type CaseFacts, type Role }
 
 export type WorkdeskView = "mine" | "unassigned" | "waiting" | "decisions" | "all";
 
+/**
+ * A view chosen in the browser is a *request*, never a grant: anything a role may
+ * not see silently resolves to that role's default instead of widening access.
+ */
+export const WORKDESK_VIEWS: Record<"owner" | "operator", WorkdeskView[]> = {
+  owner: ["decisions", "all", "unassigned", "waiting"],
+  operator: ["mine", "unassigned", "waiting"],
+};
+
+export function resolveWorkdeskView(role: "owner" | "operator", raw: string | null | undefined): WorkdeskView {
+  const allowed = WORKDESK_VIEWS[role];
+  if (raw && (allowed as string[]).includes(raw)) return raw as WorkdeskView;
+  return role === "owner" ? "decisions" : "mine";
+}
+
 export type WorkItemView = {
   key: string;
   orderId: string | null;

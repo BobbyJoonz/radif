@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { prisma } from "@/server/db";
 import { allowedActions, nextAction, type CaseFacts } from "@/server/domain/next-action";
-import { assignTask, claimTask, getWorkdesk } from "@/server/services/workdesk";
+import { assignTask, claimTask, getWorkdesk, resolveWorkdeskView } from "@/server/services/workdesk";
 import { resetDatabase } from "./helpers/db";
 import { createCustomer, createOperator, createOrder, createTenant, expectApiError, type TestTenant } from "./helpers/fixtures";
 
@@ -153,4 +153,16 @@ describe("workdesk (real database)", () => {
     await prisma.task.update({ where: { id: row.id }, data: { status: "done", closedAt: new Date() } });
     await expectApiError(() => assignTask(toranj.ctx, row.id, operator.userId), { status: 409, code: "conflict" });
   });
+
+describe("workdesk view selection", () => {
+  it("never lets a query string widen what a role may see", () => {
+    expect(resolveWorkdeskView("operator", "decisions")).toBe("mine");
+    expect(resolveWorkdeskView("operator", "all")).toBe("mine");
+    expect(resolveWorkdeskView("operator", "unassigned")).toBe("unassigned");
+    expect(resolveWorkdeskView("owner", "mine")).toBe("decisions");
+    expect(resolveWorkdeskView("owner", "all")).toBe("all");
+    expect(resolveWorkdeskView("owner", null)).toBe("decisions");
+    expect(resolveWorkdeskView("operator", "nonsense" as string)).toBe("mine");
+  });
+});
 });
