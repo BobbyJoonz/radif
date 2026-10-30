@@ -490,6 +490,26 @@ async function persist(input: PersistInput): Promise<void> {
       await upsertTask(tx, tenantId, task, message.id, now);
     }
 
+    if (plan.draft) {
+
+      await createDraftOrder(tx, {
+
+        tenantId,
+
+        messageId: message.id,
+
+        conversationId: message.conversationId,
+
+        reason: plan.draft.reason,
+
+        currency,
+
+        now,
+
+      });
+
+    }
+
     // A message that failed before and succeeds now closes the manual-review task
     // it opened: the reason it existed is gone.
     await tx.task.updateMany({
@@ -778,4 +798,65 @@ async function ensureManualReviewTask(tenantId: string, message: MessageForAnaly
 
 function failureTaskKey(messageId: string): string {
   return `human_review|msg:${messageId}|${ANALYSIS_FAILED}`;
+}
+
+/**
+ * A draft order from a purchase message (audit #4).
+ *
+ * Draft means draft: no confirmation, no payment, no shipment. It exists so the
+ * seller has an object to review. Idempotent twice over — one open draft per
+ * customer, and a publicRef derived from the message id — so a replay or a retry
+ * cannot create a second one.
+ */
+async function createDraftOrder(
+  tx: Prisma.TransactionClient,
+  input: {
+    tenantId: string;
+    messageId: string;
+    conversationId: string;
+    reason: string;
+    currency: string;
+    now: Date;
+  },
+): Promise<void> {
+  const conversation = await tx.conversation.findFirst({
+    where: { id: input.conversationId, tenantId: input.tenantId },
+    select: { customerId: true },
+  });
+  if (!conversation) return;
+
+  const openDraft = await tx.order.findFirst({
+    where: {
+      tenantId: input.tenantId,
+      customerId: conversation.customerId,
+      status: { in: ["draft", "needs_review"] },
+    },
+    select: { id: true },
+  });
+  if (openDraft) return;
+
+  const order = await tx.order.create({
+    data: {
+      tenantId: input.tenantId,
+      customerId: conversation.customerId,
+      publicRef: "DRAFT-" + input.messageId,
+      status: "draft",
+      currency: input.currency,
+      totalMinor: 0n,
+      notes: "پیش‌نویس خودکار از پیام؛ اقلام و مبلغ تأیید نشده‌اند.",
+      orderCreatedAt: input.now,
+    },
+  });
+
+  await tx.auditEvent.create({
+    data: {
+      tenantId: input.tenantId,
+      actorType: "system",
+      action: "order.draft_created",
+      entityType: "Order",
+      entityId: order.id,
+      orderId: order.id,
+      after: { messageId: input.messageId, intent: input.reason } as Prisma.InputJsonValue,
+    },
+  });
 }

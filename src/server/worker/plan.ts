@@ -88,6 +88,8 @@ export type PlanResult = {
   tasks: TaskPlan[];
   intents: IntentKey[];
   primary: IntentKey;
+  /** A purchase with no order yet: a *draft*, never a confirmed order. */
+  draft?: { reason: IntentKey };
 };
 
 /** Intents that are about *an order*, so an ambiguous link matters. */
@@ -117,7 +119,22 @@ export function planAnalysis(input: PlanInput): PlanResult {
   const suggestions = planSuggestions(input, primary, intents);
   const tasks = planTasks(input, intents);
 
-  return { suggestions, tasks, intents, primary };
+  // Audit #4: a purchase message with no order in play must produce a draft
+
+  // order — a task alone leaves the seller a note and no object to review.
+
+  const wantsDraft =
+
+    !input.order && (intents.includes("new_order") || intents.includes("repeat_order"));
+
+  const draft = wantsDraft
+
+    ? { reason: (intents.includes("new_order") ? "new_order" : "repeat_order") as IntentKey }
+
+    : undefined;
+
+
+  return { suggestions, tasks, intents, primary, ...(draft ? { draft } : {}) };
 }
 
 // ───────────────────────────── suggestions ─────────────────────────────
