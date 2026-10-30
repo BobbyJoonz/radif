@@ -15,6 +15,20 @@ export const dynamic = "force-dynamic";
 
 const DEMO_PASSWORD = "radif-demo-1405";
 
+/** One retry, short pause: a paused serverless Postgres wakes on the first ping. */
+async function withDbRetry<T>(run: () => Promise<T>): Promise<T> {
+  try {
+    return await run();
+  } catch (first) {
+    await new Promise((resolve) => setTimeout(resolve, 600));
+    try {
+      return await run();
+    } catch {
+      throw first;
+    }
+  }
+}
+
 export const GET = handler(async (request: Request) => {
   if (!isDemo()) {
     return NextResponse.json(
@@ -40,11 +54,13 @@ export const GET = handler(async (request: Request) => {
     return ok({ kind: "customer", customer: customer.displayName, href: "/fa/demo/customer" });
   }
 
-  const members = await prisma.membership.findMany({
+  const members = await withDbRetry(() =>
+    prisma.membership.findMany({
     where: { tenant: { isDemo: true }, ...(role ? { role } : {}) },
-    include: { user: true, tenant: true },
-    take: 20,
-  });
+      include: { user: true, tenant: true },
+      take: 20,
+    }),
+  );
 
   if (members.length === 0) {
     return NextResponse.json(

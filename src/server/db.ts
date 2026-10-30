@@ -12,7 +12,14 @@ function createClient() {
   // the first query, so a placeholder here keeps module import side-effect free.
   const connectionString =
     process.env.DATABASE_URL ?? "postgresql://placeholder:placeholder@127.0.0.1:5432/placeholder";
-  const adapter = new PrismaPg({ connectionString });
+  const adapter = new PrismaPg({
+    connectionString,
+    // Serverless: many short-lived instances, one managed Postgres. Keep the
+    // pool small, fail fast, and let idle connections go.
+    max: 5,
+    connectionTimeoutMillis: 10_000,
+    idleTimeoutMillis: 30_000,
+  });
   return new PrismaClient({
     adapter,
     log: process.env.NODE_ENV === "production" ? ["error"] : ["error", "warn"],
