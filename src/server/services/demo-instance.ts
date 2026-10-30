@@ -51,6 +51,14 @@ export async function createDemoInstance(options: { intoTenantId?: string } = {}
       prisma.task.findMany({ where: { tenantId: from } }),
     ]);
 
+  // Referential remap: the template's users are not members of the new shop, so
+  // a copied task assigned to them would point at a stranger (the audit found
+  // exactly this). In a fresh personal instance every human reference becomes the
+  // new host, who is the only member.
+  const sourceUsers = new Set(
+    (await prisma.membership.findMany({ where: { tenantId: from }, select: { userId: true } })).map((row) => row.userId),
+  );
+
   const ids = new Map<string, string>();
   const next = (old: string | null | undefined): string | null => {
     if (!old) return null;
@@ -85,8 +93,10 @@ export async function createDemoInstance(options: { intoTenantId?: string } = {}
       });
     }
 
+    let hostUserId: string | null = null;
     if (!options.intoTenantId) {
       const user = await tx.user.create({ data: { id: randomUUID(), name: "میزبان دمو", email, emailVerified: true, locale: "fa" } });
+      hostUserId = user.id;
       await tx.account.create({ data: { id: randomUUID(), accountId: user.id, providerId: "credential", userId: user.id, password: hash } });
       await tx.membership.create({ data: { id: randomUUID(), tenantId, userId: user.id, role: "owner" } });
     }
@@ -102,6 +112,9 @@ export async function createDemoInstance(options: { intoTenantId?: string } = {}
 
     // Each block casts its payload: rows read from the database are structurally
     // valid createMany inputs, but Json columns do not widen to InputJsonValue.
+    const remapUser = (old: string | null) =>
+      !options.intoTenantId && old && sourceUsers.has(old) && hostUserId ? hostUserId : old;
+
     if (products.length)
       await tx.product.createMany({ data: products.map((r) => ({ ...r, id: must(r.id), tenantId })) as unknown as Prisma.ProductCreateManyInput[] });
     if (customers.length)
@@ -119,14 +132,14 @@ export async function createDemoInstance(options: { intoTenantId?: string } = {}
         data: messages.map((r) => ({ ...r, id: must(r.id), tenantId, conversationId: must(r.conversationId) })) as unknown as Prisma.MessageCreateManyInput[],
       });
     if (orders.length)
-      await tx.order.createMany({ data: orders.map((r) => ({ ...r, id: must(r.id), tenantId, customerId: must(r.customerId) })) as unknown as Prisma.OrderCreateManyInput[] });
+      await tx.order.createMany({ data: orders.map((r) => ({ ...r, id: must(r.id), tenantId, customerId: must(r.customerId), confirmedById: remapUser(r.confirmedById) })) as unknown as Prisma.OrderCreateManyInput[] });
     if (items.length)
       await tx.orderItem.createMany({
         data: items.map((r) => ({ ...r, id: must(r.id), tenantId, orderId: must(r.orderId), productId: next(r.productId) })) as unknown as Prisma.OrderItemCreateManyInput[],
       });
     if (claims.length)
       await tx.paymentClaim.createMany({
-        data: claims.map((r) => ({ ...r, id: must(r.id), tenantId, orderId: must(r.orderId), sourceMessageId: next(r.sourceMessageId), verifiedById: r.verifiedById })) as unknown as Prisma.PaymentClaimCreateManyInput[],
+        data: claims.map((r) => ({ ...r, id: must(r.id), tenantId, orderId: must(r.orderId), sourceMessageId: next(r.sourceMessageId), verifiedById: remapUser(r.verifiedById) })) as unknown as Prisma.PaymentClaimCreateManyInput[],
       });
     if (shipments.length)
       await tx.shipment.createMany({ data: shipments.map((r) => ({ ...r, id: must(r.id), tenantId, orderId: must(r.orderId) })) as unknown as Prisma.ShipmentCreateManyInput[] });
@@ -134,11 +147,11 @@ export async function createDemoInstance(options: { intoTenantId?: string } = {}
       await tx.analysisRun.createMany({ data: runs.map((r) => ({ ...r, id: must(r.id), tenantId, messageId: must(r.messageId) })) as unknown as Prisma.AnalysisRunCreateManyInput[] });
     if (suggestions.length)
       await tx.suggestion.createMany({
-        data: suggestions.map((r) => ({ ...r, id: must(r.id), tenantId, analysisRunId: must(r.analysisRunId), sourceMessageId: must(r.sourceMessageId), orderId: next(r.orderId), customerId: next(r.customerId), reviewedById: r.reviewedById })) as unknown as Prisma.SuggestionCreateManyInput[],
+        data: suggestions.map((r) => ({ ...r, id: must(r.id), tenantId, analysisRunId: must(r.analysisRunId), sourceMessageId: must(r.sourceMessageId), orderId: next(r.orderId), customerId: next(r.customerId), reviewedById: remapUser(r.reviewedById) })) as unknown as Prisma.SuggestionCreateManyInput[],
       });
     if (tasks.length)
       await tx.task.createMany({
-        data: tasks.map((r) => ({ ...r, id: must(r.id), tenantId, orderId: next(r.orderId), messageId: next(r.messageId), customerId: next(r.customerId), assigneeId: r.assigneeId })) as unknown as Prisma.TaskCreateManyInput[],
+        data: tasks.map((r) => ({ ...r, id: must(r.id), tenantId, orderId: next(r.orderId), messageId: next(r.messageId), customerId: next(r.customerId), assigneeId: remapUser(r.assigneeId) })) as unknown as Prisma.TaskCreateManyInput[],
       });
 
     return { tenantId, email, password, customers: customers.length, conversations: conversations.length, orders: orders.length, tasks: tasks.length };
