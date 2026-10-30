@@ -51,7 +51,7 @@ export function AppShell({
 
       <header className="shellhead">
         <div className="shellhead-top">
-          <Link href={`/${locale}`} className="brand" aria-label={`${dict.brand.name} — ${dict.brand.tagline}`}>
+          <Link href={`/${locale}/today`} className="brand" aria-label={`${dict.brand.name} — ${dict.brand.tagline}`}>
             <BrandMark locale={locale} priority />
           </Link>
           <span className="brand-divider" aria-hidden="true" />
