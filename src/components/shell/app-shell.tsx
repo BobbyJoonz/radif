@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import type { Dictionary } from "@/i18n";
 import type { Locale } from "@/i18n/config";
 import { BrandMark } from "@/components/brand/brand-mark";
+import { navKeysFor, type NavKey } from "@/lib/nav-matrix";
 import { UserMenu } from "@/components/shell/user-menu";
 import { MobileNav, TopNav, type NavItem } from "./nav";
 
@@ -32,6 +33,7 @@ export function AppShell({
   counts: { overdue: number; needsReview: number };
   children: ReactNode;
 }) {
+  const allowed = new Set<NavKey>(navKeysFor(session.role));
   const items: NavItem[] = [
     { key: "today", href: "today", label: dict.nav.today, count: counts.overdue },
     { key: "inbox", href: "inbox", label: dict.nav.inbox },
@@ -41,7 +43,7 @@ export function AppShell({
     { key: "import", href: "import", label: dict.nav.import },
     { key: "settings", href: "settings", label: dict.nav.settings },
     { key: "evaluation", href: "evaluation", label: dict.nav.evaluation },
-  ];
+  ].filter((item) => allowed.has(item.key as NavKey));
 
   return (
     <div className="appshell">

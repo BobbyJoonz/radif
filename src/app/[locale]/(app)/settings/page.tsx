@@ -5,6 +5,7 @@ import { readDesignedState } from "@/components/ui";
 import { getDictionary } from "@/i18n";
 import { isLocale, withLocale, type Locale } from "@/i18n/config";
 import { getSessionContext } from "@/server/session";
+import { canSee, type NavKey } from "@/lib/nav-matrix";
 import { getSettings } from "@/server/services/settings";
 import type { SettingsDTO } from "@/lib/dto";
 
@@ -28,6 +29,9 @@ export default async function SettingsPage({
 
   const ctx = await getSessionContext();
   if (!ctx) redirect(withLocale(locale, "/login"));
+  // Menu hiding is not authorisation: the page itself refuses a principal that the
+  // matrix does not list for this section.
+  if (!canSee(ctx.role, "settings" as NavKey)) redirect(withLocale(locale, "/today?denied=settings"));
 
   let state = readDesignedState(sp.state);
   let settings: SettingsDTO | null = null;

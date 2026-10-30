@@ -5,6 +5,7 @@ import { readDesignedState } from "@/components/ui";
 import { getDictionary } from "@/i18n";
 import { isLocale, withLocale, type Locale } from "@/i18n/config";
 import { getSessionContext } from "@/server/session";
+import { canSee, type NavKey } from "@/lib/nav-matrix";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +27,9 @@ export default async function ImportPage({
 
   const ctx = await getSessionContext();
   if (!ctx) redirect(withLocale(locale, "/login"));
+  // Menu hiding is not authorisation: the page itself refuses a principal that the
+  // matrix does not list for this section.
+  if (!canSee(ctx.role, "import" as NavKey)) redirect(withLocale(locale, "/today?denied=import"));
 
   const state = readDesignedState(sp.state);
 
