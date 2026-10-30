@@ -78,3 +78,42 @@ export function taskDetail(type: string, stored: string | null, locale: Locale):
   if (locale === "fa") return stored;
   return DETAILS[type] ?? null;
 }
+
+const NEXT_ACTIONS: Record<string, { fa: string; en: string }> = {
+  payment_reconcile: { fa: "تطبیق پرداخت و تأیید", en: "Reconcile the payment, then confirm" },
+  address_complete: { fa: "تکمیل آدرس", en: "Complete the address" },
+  tracking_followup: { fa: "گرفتن کد رهگیری", en: "Get the tracking code" },
+  draft_review: { fa: "بررسی پیش‌نویس سفارش", en: "Review the order draft" },
+  customer_reply: { fa: "پاسخ به مشتری", en: "Reply to the customer" },
+  human_review: { fa: "بررسی انسانی", en: "A human has to look at this" },
+  shipment_action: { fa: "اقدام ارسال", en: "Shipment action" },
+};
+
+export function taskNextAction(type: string, locale: Locale): string {
+  if (locale !== "en") return NEXT_ACTIONS[type]?.fa ?? "بررسی و اقدام";
+  return NEXT_ACTIONS[type]?.en ?? humanize(type);
+}
+
+/** The small facts under a row ("unverified payment · parcel being prepared"). */
+const FRAGMENTS: Record<string, { fa: string; en: string }> = {
+  payment_unverified: { fa: "پرداخت بررسی‌نشده", en: "payment unverified" },
+  payment_verified: { fa: "پرداخت تأییدشده", en: "payment verified" },
+  address_not_in_message: { fa: "آدرس تازه در پیام نیامده", en: "no new address in the message" },
+  address_after_shipment: { fa: "تغییر آدرس پس از ارسال", en: "address change after shipping" },
+  tracking_missing: { fa: "کد رهگیری ثبت نشده", en: "no tracking code recorded" },
+  parcel_preparing: { fa: "مرسوله در حال آماده‌سازی", en: "parcel being prepared" },
+  parcel_shipped: { fa: "مرسوله ارسال شده", en: "parcel shipped" },
+  parcel_delivered: { fa: "مرسوله تحویل شده", en: "parcel delivered" },
+  shipping_paused: { fa: "ارسال متوقف شده", en: "shipping paused" },
+  order_needs_review: { fa: "سفارش نیازمند بررسی", en: "order needs review" },
+};
+
+export function fragment(key: string, locale: Locale): string {
+  const hit = FRAGMENTS[key];
+  if (!hit) return locale === "en" ? humanize(key) : key;
+  return locale === "en" ? hit.en : hit.fa;
+}
+
+export function unnamedCustomer(locale: Locale): string {
+  return locale === "en" ? "Unnamed customer" : "مشتری بدون نام";
+}

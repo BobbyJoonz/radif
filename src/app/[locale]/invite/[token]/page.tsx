@@ -3,6 +3,7 @@ import Link from "next/link";
 import { BrandEmblem } from "@/components/brand/brand-mark";
 import { AcceptInvite } from "@/components/marketing/accept-invite";
 import { getSessionContext } from "@/server/session";
+import { hashToken } from "@/server/services/invitations";
 import { prisma } from "@/server/db";
 import { routes } from "@/lib/routes";
 import { isLocale, type Locale } from "@/i18n/config";
@@ -30,7 +31,7 @@ export default async function InvitePage({
 
   const session = await getSessionContext();
   const invitation = await prisma.invitation.findFirst({
-    where: { tokenHash: (await import("@/server/services/invitations")).hashToken(token) },
+    where: { tokenHash: hashToken(token) },
     select: { email: true, role: true, expiresAt: true, acceptedAt: true, tenant: { select: { nameFa: true, nameEn: true } } },
   });
 

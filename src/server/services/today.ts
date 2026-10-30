@@ -1,4 +1,6 @@
 import type { SessionContext } from "@/server/session";
+import { fragment, taskNextAction, taskReason, unnamedCustomer } from "@/i18n/task-copy";
+import type { Locale } from "@/i18n/config";
 import { prisma } from "@/server/db";
 import type { Prisma } from "@/generated/prisma/client";
 import type { PriorityValue, SourceValue, TodayDTO, TodayRow } from "@/lib/dto";
@@ -88,7 +90,7 @@ export type TodayFilter = {
   due?: "overdue" | "next24h" | "next7d";
 };
 
-export async function getToday(ctx: SessionContext, filter: TodayFilter = {}): Promise<TodayDTO> {
+export async function getToday(ctx: SessionContext, filter: TodayFilter = {}, locale: Locale = "fa"): Promise<TodayDTO> {
   const now = new Date();
   const timeZone = ctx.tenant.timezone;
   const tenantId = ctx.tenant.id;
@@ -124,7 +126,7 @@ export async function getToday(ctx: SessionContext, filter: TodayFilter = {}): P
 
   const fallbackSources = await sourceFallbackFor(tenantId, tasks);
 
-  const items = tasks.map((task) => toRow(task, now, timeZone, fallbackSources));
+  const items = tasks.map((task) => toRow(task, now, timeZone, fallbackSources, locale));
   const stats = computeStats(windowMessages, unanswered);
   const dayStrip = hourlyInbound(windowMessages, window, timeZone);
 
@@ -305,10 +307,11 @@ function toRow(
   now: Date,
   timeZone: string,
   fallbackSources: Map<string, SourceValue>,
+  locale: Locale,
 ): TodayRow {
   const order = task.order;
   const customerName =
-    task.customer?.displayName ?? order?.customer?.displayName ?? "مشتری بدون نام";
+    task.customer?.displayName ?? order?.customer?.displayName ?? unnamedCustomer(locale);
   const customerId = task.customerId ?? null;
   const source: SourceValue =
     task.message?.source ??
@@ -319,10 +322,10 @@ function toRow(
     taskId: task.id,
     priority: task.priority as PriorityValue,
     reasonCode: task.reasonCode,
-    reasonText: reasonOf(task),
+    reasonText: taskReason(task.reasonCode, reasonOf(task), locale),
     title: task.title,
-    nextAction: NEXT_ACTION[task.type] ?? "بررسی و اقدام",
-    subline: sublineOf(task),
+    nextAction: taskNextAction(task.type, locale),
+    subline: sublineOf(task, locale),
     dueAt: task.dueAt?.toISOString() ?? null,
     dueLabel: dueLabelOf(task.dueAt, now, timeZone),
     customerName,
@@ -351,35 +354,35 @@ function reasonOf(task: TodayTask): string {
  * آدرس جدید نامشخص»). Only facts read from stored state — a claim nobody has
  * verified, a missing tracking code, where the parcel actually is.
  */
-function sublineOf(task: TodayTask): string | null {
+function sublineOf(task: TodayTask, locale: Locale): string | null {
   const parts: string[] = [];
   const claim = task.order?.paymentClaims[0] ?? null;
   const shipment = task.order?.shipments[0] ?? null;
 
   if (task.type === "payment_reconcile" || task.reasonCode === "payment_claim_unverified") {
-    parts.push(claim?.status === "verified" ? "پرداخت تأییدشده" : "پرداخت بررسی‌نشده");
+    parts.push(fragment(claim?.status === "verified" ? "payment_verified" : "payment_unverified", locale));
   } else if (claim?.status === "claimed" || claim?.status === "disputed") {
-    parts.push("پرداخت بررسی‌نشده");
+    parts.push(fragment("payment_unverified", locale));
   } else if (claim?.status === "verified") {
-    parts.push("پرداخت تأییدشده");
+    parts.push(fragment("payment_verified", locale));
   }
 
   if (task.reasonCode === "address_change" || task.type === "address_complete") {
-    parts.push("آدرس تازه در پیام نیامده");
+    parts.push(fragment("address_not_in_message", locale));
   }
   if (task.reasonCode === "address_change_after_shipment") {
-    parts.push("تغییر آدرس پس از ارسال");
+    parts.push(fragment("address_after_shipment", locale));
   }
   if (task.type === "tracking_followup" || task.reasonCode === "tracking_missing") {
-    parts.push("کد رهگیری ثبت نشده");
+    parts.push(fragment("tracking_missing", locale));
   }
 
-  if (shipment?.status === "preparing") parts.push("مرسوله در حال آماده‌سازی");
-  else if (shipment?.status === "shipped") parts.push("مرسوله ارسال شده");
-  else if (shipment?.status === "delivered") parts.push("مرسوله تحویل شده");
-  else if (shipment?.status === "paused") parts.push("ارسال متوقف شده");
+  if (shipment?.status === "preparing") parts.push(fragment("parcel_preparing", locale));
+  else if (shipment?.status === "shipped") parts.push(fragment("parcel_shipped", locale));
+  else if (shipment?.status === "delivered") parts.push(fragment("parcel_delivered", locale));
+  else if (shipment?.status === "paused") parts.push(fragment("shipping_paused", locale));
 
-  if (task.order?.status === "needs_review") parts.push("سفارش نیازمند بررسی");
+  if (task.order?.status === "needs_review") parts.push(fragment("order_needs_review", locale));
 
   if (parts.length === 0) return null;
   return [...new Set(parts)].slice(0, 3).join(" · ");

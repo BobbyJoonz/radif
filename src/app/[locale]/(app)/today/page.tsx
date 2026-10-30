@@ -58,7 +58,7 @@ export default async function TodayPage({
   const due = typeof sp.due === "string" && sp.due ? (sp.due as "overdue" | "next24h" | "next7d") : undefined;
   const filtered = Boolean(assignee || due);
 
-  const data = await getToday(ctx, { assignee, due });
+  const data = await getToday(ctx, { assignee, due }, locale);
 
   const rawView = typeof sp.view === "string" ? sp.view : null;
   const view = resolveWorkdeskView(ctx.role === "owner" ? "owner" : "operator", rawView);
