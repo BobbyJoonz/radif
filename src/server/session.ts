@@ -1,7 +1,8 @@
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { auth } from "./auth";
 import { prisma } from "./db";
 import { errors } from "./http";
+import { pickActiveMembership, type MembershipView } from "./active-tenant";
 import type { MembershipRole } from "@/generated/prisma/enums";
 
 /**
@@ -37,15 +38,48 @@ export type SessionContext = {
   sessionId: string;
 };
 
+/** The cookie that names the active shop; validated against memberships on every read. */
+export const ACTIVE_TENANT_COOKIE = "radif.tenant";
+
+export async function listMemberships(userId: string): Promise<MembershipView[]> {
+  const rows = await prisma.membership.findMany({
+    where: { userId },
+    orderBy: { createdAt: "asc" },
+    include: { tenant: { select: { slug: true, nameFa: true, nameEn: true } } },
+  });
+  return rows.map((row) => ({
+    tenantId: row.tenantId,
+    role: row.role,
+    tenantSlug: row.tenant.slug,
+    nameFa: row.tenant.nameFa,
+    nameEn: row.tenant.nameEn,
+    createdAt: row.createdAt,
+  }));
+}
+
 export async function getSessionContext(): Promise<SessionContext | null> {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session?.user?.id) return null;
 
-  const membership = await prisma.membership.findFirst({
+  // Every request re-reads the memberships: a removed colleague loses access on
+  // the next call, and the active shop is a validated membership, never a claim.
+  const rows = await prisma.membership.findMany({
     where: { userId: session.user.id },
     orderBy: { createdAt: "asc" },
     include: { tenant: { include: { settings: true } } },
   });
+  const memberships: MembershipView[] = rows.map((row) => ({
+    tenantId: row.tenantId,
+    role: row.role,
+    tenantSlug: row.tenant.slug,
+    nameFa: row.tenant.nameFa,
+    nameEn: row.tenant.nameEn,
+    createdAt: row.createdAt,
+  }));
+  const preferred = (await cookies()).get(ACTIVE_TENANT_COOKIE)?.value ?? null;
+  const active = pickActiveMembership(memberships, preferred);
+  if (!active) return null;
+  const membership = rows.find((row) => row.tenantId === active.tenantId);
   if (!membership) return null;
 
   const { tenant } = membership;
