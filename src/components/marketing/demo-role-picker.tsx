@@ -30,7 +30,7 @@ export function DemoRolePicker({
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [busy, setBusy] = useState<Persona | null>(null);
+  const [busy, setBusy] = useState<Persona | "personal" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [repair, setRepair] = useState<string | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -66,6 +66,8 @@ export function DemoRolePicker({
           operatorHint: "کارهای ارجاع‌شده؛ بدون تأیید پرداخت",
           customer: "مشتری",
           customerHint: "تاریخچهٔ سفارش‌های خودش، فقط خواندنی",
+          personal: "دموی شخصی من",
+          personalHint: "یک فروشگاه کلون‌شده فقط برای شما — نه حساب مشترک",
         }
       : {
           title: "Which role do you want to be?",
@@ -76,8 +78,32 @@ export function DemoRolePicker({
           operatorHint: "Assigned work; cannot verify payments",
           customer: "Customer",
           customerHint: "Their own order history, read-only",
+          personal: "My own demo",
+          personalHint: "A cloned shop for you only — not a shared account",
         };
 
+
+  /** The visitor's own cloned shop — no shared account, so writes stay theirs. */
+  async function startPersonal() {
+    setBusy("personal");
+    setError(null);
+    try {
+      const created = await fetch("/api/demo/start", { method: "POST" });
+      const payload = (await created.json()) as { ok: boolean; data?: { email: string; password: string } };
+      if (!created.ok || !payload.ok || !payload.data) throw new Error("create");
+      const signedIn = await fetch("/api/auth/sign-in/email", {
+        method: "POST",
+        headers: { "content-type": "application/json", origin: window.location.origin },
+        body: JSON.stringify({ email: payload.data.email, password: payload.data.password }),
+      });
+      if (!signedIn.ok) throw new Error("signin");
+      router.push(`/${locale}/today`);
+      router.refresh();
+    } catch {
+      setBusy(null);
+      setError(errorLabel);
+    }
+  }
   async function enter(persona: Persona) {
     setBusy(persona);
     setError(null);
@@ -153,6 +179,19 @@ export function DemoRolePicker({
                 </span>
               </button>
             ))}
+            <button
+              type="button"
+              className="rolepicker-item"
+              onClick={startPersonal}
+              disabled={busy !== null}
+              aria-busy={busy === "personal"}
+            >
+              <span className="rolepicker-item-head">{copy.personal}</span>
+              <span className="rolepicker-item-hint">{copy.personalHint}</span>
+              <span className="rolepicker-item-go" aria-hidden="true">
+                {busy === "personal" ? pendingLabel : "‹"}
+              </span>
+            </button>
           </div>
           {error ? (
             <p role="alert" className="rolepicker-error">
