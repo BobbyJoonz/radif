@@ -2,7 +2,7 @@ import { isDemo } from "@/lib/env";
 import { errors, handler, ok } from "@/server/http";
 import { prisma } from "@/server/db";
 import { requireRole } from "@/server/session";
-import { resetDemoData } from "@/server/services/demo";
+import { resetPersonalDemo } from "@/server/services/demo";
 
 /**
  * POST /api/demo/reset — wipe and re-seed this tenant's DEMO data (CONTRACTS §2, §5).
@@ -41,6 +41,8 @@ export const POST = handler(async (request: Request) => {
   }
   lastReset.set(ctx.tenant.id, Date.now());
 
-  await resetDemoData(ctx);
-  return ok({ ok: true });
+  // A personal demo is reset by rebuilding its own clone; the shared shops are never
+  // re-seeded from a visitor action.
+  const result = await resetPersonalDemo(ctx);
+  return ok({ ok: true, scope: result.scope });
 });

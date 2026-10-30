@@ -25,7 +25,7 @@ export type DemoInstance = {
   tasks: number;
 };
 
-export async function createDemoInstance(): Promise<DemoInstance> {
+export async function createDemoInstance(options: { intoTenantId?: string } = {}): Promise<DemoInstance> {
   if (env.APP_MODE === "production") throw new Error("demo instances are not available in production");
 
   const template = await prisma.tenant.findFirst({
@@ -68,28 +68,37 @@ export async function createDemoInstance(): Promise<DemoInstance> {
   const hash = await hashPassword(password);
 
   return prisma.$transaction(async (tx) => {
-    const tenant = await tx.tenant.create({
-      data: {
-        id: randomUUID(),
-        slug: `demo-${stamp}-${randomUUID().slice(0, 6)}`,
-        nameFa: template.nameFa,
-        nameEn: template.nameEn,
-        timezone: template.timezone,
-        currency: template.currency,
-        isDemo: true,
-        sharedDemo: false,
-        settings: { create: { demoMode: true } },
-      },
-    });
-    const tenantId = tenant.id;
+    const tenantId = options.intoTenantId ?? randomUUID();
+    if (!options.intoTenantId) {
+      await tx.tenant.create({
+        data: {
+          id: tenantId,
+          slug: `demo-${stamp}-${randomUUID().slice(0, 6)}`,
+          nameFa: template.nameFa,
+          nameEn: template.nameEn,
+          timezone: template.timezone,
+          currency: template.currency,
+          isDemo: true,
+          sharedDemo: false,
+          settings: { create: { demoMode: true } },
+        },
+      });
+    }
 
-    const user = await tx.user.create({ data: { id: randomUUID(), name: "میزبان دمو", email, emailVerified: true, locale: "fa" } });
-    await tx.account.create({ data: { id: randomUUID(), accountId: user.id, providerId: "credential", userId: user.id, password: hash } });
-    await tx.membership.create({ data: { id: randomUUID(), tenantId, userId: user.id, role: "owner" } });
+    if (!options.intoTenantId) {
+      const user = await tx.user.create({ data: { id: randomUUID(), name: "میزبان دمو", email, emailVerified: true, locale: "fa" } });
+      await tx.account.create({ data: { id: randomUUID(), accountId: user.id, providerId: "credential", userId: user.id, password: hash } });
+      await tx.membership.create({ data: { id: randomUUID(), tenantId, userId: user.id, role: "owner" } });
+    }
 
-    const connection = await tx.channelConnection.create({
-      data: { id: randomUUID(), tenantId, channel: "replay", accountRef: "template.demo", displayName: template.nameFa, status: "ready" },
-    });
+    const existingConnection = options.intoTenantId
+      ? await tx.channelConnection.findFirst({ where: { tenantId }, select: { id: true } })
+      : null;
+    const connection =
+      existingConnection ??
+      (await tx.channelConnection.create({
+        data: { id: randomUUID(), tenantId, channel: "replay", accountRef: "template.demo", displayName: template.nameFa, status: "ready" },
+      }));
 
     // Each block casts its payload: rows read from the database are structurally
     // valid createMany inputs, but Json columns do not widen to InputJsonValue.

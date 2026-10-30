@@ -8,6 +8,7 @@ import { errors } from "@/server/http";
 import { ReplayChannelAdapter } from "@/server/channels/replay";
 import { ingestValidated, type TenantRef } from "@/server/ingestion/ingest";
 import { validateIncoming } from "@/server/ingestion/schemas";
+import { createDemoInstance } from "@/server/services/demo-instance";
 
 /**
  * The demo's two write paths (CONTRACTS §5 `POST /api/demo/*`, DEMO.md).
@@ -214,4 +215,38 @@ function runDemoSeed(): Promise<{ code: number | null; signal: NodeJS.Signals | 
       resolve({ code, signal });
     });
   });
+}
+
+/**
+ * Reset a *personal* demo instance (audit: a visitor must never reset the shared
+ * template). The clone is rebuilt from the template inside its own tenant: its
+ * operational rows are cleared and copied again, while the shared shops are not
+ * touched at all — no seed process, no global effect.
+ */
+export async function resetPersonalDemo(ctx: SessionContext): Promise<{ scope: "personal" }> {
+  assertDemoMode(ctx);
+  const tenantId = ctx.tenant.id;
+  const tenant = await prisma.tenant.findFirst({ where: { id: tenantId }, select: { sharedDemo: true } });
+  if (!tenant || tenant.sharedDemo) {
+    throw errors.forbidden("بازنشانی فقط روی دموی شخصی انجام می‌شود؛ فروشگاه مشترک دست‌نخورده می‌ماند.");
+  }
+  await prisma.$transaction(async (tx) => {
+    await tx.job.deleteMany({ where: { tenantId } });
+    await tx.auditEvent.deleteMany({ where: { tenantId } });
+    await tx.suggestion.deleteMany({ where: { tenantId } });
+    await tx.task.deleteMany({ where: { tenantId } });
+    await tx.paymentClaim.deleteMany({ where: { tenantId } });
+    await tx.shipment.deleteMany({ where: { tenantId } });
+    await tx.outboundMessage.deleteMany({ where: { tenantId } });
+    await tx.orderItem.deleteMany({ where: { tenantId } });
+    await tx.order.deleteMany({ where: { tenantId } });
+    await tx.analysisRun.deleteMany({ where: { tenantId } });
+    await tx.message.deleteMany({ where: { tenantId } });
+    await tx.conversation.deleteMany({ where: { tenantId } });
+    await tx.customerIdentity.deleteMany({ where: { tenantId } });
+    await tx.customer.deleteMany({ where: { tenantId } });
+    await tx.product.deleteMany({ where: { tenantId } });
+  });
+  await createDemoInstance({ intoTenantId: tenantId });
+  return { scope: "personal" };
 }
