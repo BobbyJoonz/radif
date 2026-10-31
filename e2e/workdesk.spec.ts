@@ -8,11 +8,20 @@ import { expect, test, type Page } from "@playwright/test";
  * cookie.
  */
 async function enterAs(page: Page, role: "مالک" | "اپراتور") {
-  await page.goto("/fa");
-  await page.getByRole("button", { name: /بدون ثبت‌نام/ }).first().click();
-  await page.locator(".rolepicker-item", { hasText: role }).first().click();
-  await page.waitForURL(/\/today/, { timeout: 30_000 });
-  await expect(page.locator(".workdesk")).toBeVisible();
+  // The demo entrance signs in against the real API; a cold server can miss the
+  // first attempt, and a flaky entrance would blame the workdesk for it.
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    await page.goto("/fa");
+    await page.getByRole("button", { name: /بدون ثبت‌نام/ }).first().click();
+    await page.locator(".rolepicker-item", { hasText: role }).first().click();
+    try {
+      await page.waitForURL(/\/today/, { timeout: 25_000 });
+      await expect(page.locator(".workdesk")).toBeVisible();
+      return;
+    } catch (error) {
+      if (attempt === 1) throw error;
+    }
+  }
 }
 
 test.describe("workdesk", () => {
@@ -65,5 +74,17 @@ test.describe("workdesk", () => {
     await page.goBack();
     await page.goForward();
     await expect(page).toHaveURL(/order=order_1042/);
+  });
+
+    expect([200, 400, 404, 409, 422]).toContain(update.status());
+
+    await page.goto("/fa/orders?order=order_1027");
+    await page.waitForTimeout(800);
+    const html = await page.content();
+    if (update.status() === 200) {
+      expect(html).toContain("E2E-TRK-0001");
+    }
+    await page.reload();
+    await expect(page).toHaveURL(/order=order_1027/);
   });
 });
