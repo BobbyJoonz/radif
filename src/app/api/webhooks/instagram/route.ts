@@ -1,14 +1,17 @@
 import { NextResponse } from "next/server";
+import { prisma } from "@/server/db";
 import { handler, ok } from "@/server/http";
 import { instagramConfig, parseWebhook, verifyChallenge, verifySignature } from "@/server/channels/instagram/api";
-import { ingestInbound } from "@/server/instagram";
 
 /**
  * Instagram webhooks.
  *
  * GET  — Meta's subscription handshake (hub.mode/token/challenge).
- * POST — message events. The body is read as text first, because the signature is
- *        computed over the raw bytes; parsing before verifying would be a hole.
+ * POST — store the raw delivery, then answer 200 immediately.
+ *
+ * The order matters: a webhook is customer data, and Meta treats a non-200 as a
+ * reason to disable the subscription. Persisting first means a parsing bug or a slow
+ * database cannot lose the message — the drain step processes the stored rows.
  */
 export const dynamic = "force-dynamic";
 
@@ -28,7 +31,8 @@ export const GET = handler(async (request: Request) => {
 export const POST = handler(async (request: Request) => {
   const raw = await request.text();
   const config = instagramConfig();
-  if (!verifySignature(raw, request.headers.get("x-hub-signature-256"), config.appSecret)) {
+  const signatureOk = verifySignature(raw, request.headers.get("x-hub-signature-256"), config.appSecret);
+  if (!signatureOk) {
     return NextResponse.json(
       { ok: false, error: { code: "bad_signature", message: "امضای وبهوک معتبر نیست." } },
       { status: 401 },
@@ -43,7 +47,11 @@ export const POST = handler(async (request: Request) => {
   }
 
   const events = parseWebhook(payload);
-  const result = await ingestInbound(events);
-  // Meta only needs a 200; the counts are for our logs and health screen.
-  return ok(result);
+  const accountRef = events[0]?.accountId ?? "";
+  const stored = await prisma.webhookEvent.create({
+    data: { provider: "instagram", accountRef, payload: payload as object, signatureOk: true },
+    select: { id: true },
+  });
+
+  return ok({ stored: stored.id, events: events.length });
 });

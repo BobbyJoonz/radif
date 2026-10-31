@@ -566,6 +566,24 @@ model Suggestion {
   @@index([analysisRunId])
 }
 
+/// A raw inbound webhook delivery.
+///
+/// Stored before anything else happens: Meta retries, and a bug in parsing must not
+/// lose a customer's message. The processing step is idempotent and can be re-run.
+model WebhookEvent {
+  id          String    @id @default(cuid())
+  provider    String
+  accountRef  String
+  payload     Json
+  signatureOk Boolean   @default(true)
+  receivedAt  DateTime  @default(now())
+  processedAt DateTime?
+  result      Json?
+
+  @@index([processedAt])
+  @@index([provider, accountRef])
+}
+
 /// The shop's own answer book. Plain text on purpose: a reviewable table beats a
 /// vector store for a shop with tens of entries, and the owner can edit the words.
 model KnowledgeEntry {

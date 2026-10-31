@@ -59,3 +59,32 @@ src/server/crypto/seal.ts              AES-256-GCM با AAD = tenantId
 `tests/instagram.test.ts` — ۱۰ سنجه: مهروموم (رفت‌وبرگشت، فروشگاه دیگر، دستکاری)،
 state (جعلی/منقضی/اسکوپ)، امضا، پارس وبهوک، ingest (یک‌بار ذخیره، تکراری، اکانت
 ناشناس) و **ساخته‌شدن job تحلیل** برای هر پیام.
+
+## چک‌لیست سمت متا (برای این‌که پیام واقعاً بالا بیاید)
+
+| # | در Meta کجا | چه چیزی |
+|---|---|---|
+| ۱ | App Dashboard → Instagram → API setup | اکانت **Business/Creator** + محصول Instagram |
+| ۲ | App settings → Basic | `APP_ID` و `APP_SECRET` → همان `INSTAGRAM_APP_ID`/`SECRET` |
+| ۳ | App Dashboard → Webhooks → Instagram | Callback URL: `https://<domain>/api/webhooks/instagram` · Verify Token: مقدار `INSTAGRAM_WEBHOOK_VERIFY_TOKEN` |
+| ۴ | همان صفحه → Subscription | فیلد **messages** را subscribe کن (بدون این، هیچ رویدادی نمی‌آید) |
+| ۵ | App roles → Roles | خودت و پایلوت‌ها را **Tester/Admin** کن (تا App Review) |
+| ۶ | محصول → Permissions | `instagram_business_basic` + `instagram_business_manage_messages` |
+
+سپس در ردیف: **تنظیمات → اینستاگرام → اتصال اکانت**.
+
+### تشخیص (چرا پیام نمی‌آید؟)
+
+`GET /api/channels/instagram/diagnostics` یک چک‌لیست برمی‌گرداند:
+
+- `app_credentials` / `webhook_verify_token` / `seal_key`: متغیرهای محیطی
+- `webhook_url`: همان URL که باید در متا ثبت شود
+- `token`: اعتبار واقعی توکن (با یک فراخوانی `/me` به متا)
+- `webhook_delivery`: آخرین وبهوک دریافتی و این‌که پردازش شده یا در صف است
+- `pendingWebhookEvents`: تعداد رویدادهای ذخیره‌شدهٔ پردازش‌نشده
+
+### جریان ذخیره و پردازش
+
+وبهوک **اول ذخیره می‌شود** (`WebhookEvent`) و بلافاصله ۲۰۰ می‌گیرد؛ پردازش به
+`POST /api/worker/drain` سپرده می‌شود. اگر متا رویداد را دوباره بفرستد، ذخیره‌سازی
+بر اساس `mid` تکراری نمی‌شود.

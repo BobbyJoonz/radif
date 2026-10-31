@@ -3,6 +3,8 @@ import { prisma } from "@/server/db";
 import { claimJobs } from "./claim";
 import { runJob, type JobOutcome } from "./handlers";
 import { recoverPendingAnalyses, reapExpiredLeases } from "./recover";
+import { parseWebhook } from "@/server/channels/instagram/api";
+import { ingestInbound } from "@/server/instagram/ingest";
 
 /**
  * Draining the queue from a request instead of a daemon.
@@ -17,7 +19,45 @@ import { recoverPendingAnalyses, reapExpiredLeases } from "./recover";
  * "the pipeline is asleep" into "the pipeline is one minute behind at worst".
  */
 
+/**
+ * Turn stored webhook deliveries into messages.
+ *
+ * The webhook route persists and returns 200; this is where the work happens, so a
+ * slow database or a parsing bug cannot make Meta disable the subscription. Each row
+ * is marked processed with its result, and a re-run is safe (ingestion dedupes by
+ * provider message id).
+ */
+export async function processWebhookEvents(limit = 20): Promise<{ processed: number; messages: number }> {
+  const rows = await prisma.webhookEvent.findMany({
+    where: { provider: "instagram", processedAt: null },
+    orderBy: { receivedAt: "asc" },
+    take: limit,
+    select: { id: true, payload: true },
+  });
+
+  let messages = 0;
+  for (const row of rows) {
+    try {
+      const events = parseWebhook(row.payload);
+      const result = await ingestInbound(events);
+      messages += result.stored;
+      await prisma.webhookEvent.update({
+        where: { id: row.id },
+        data: { processedAt: new Date(), result },
+      });
+    } catch (error) {
+      // Keep the row unprocessed so the next drain retries; the payload is intact.
+      await prisma.webhookEvent.update({
+        where: { id: row.id },
+        data: { result: { error: error instanceof Error ? error.message.slice(0, 300) : "unknown" } },
+      });
+    }
+  }
+  return { processed: rows.length, messages };
+}
+
 export type DrainResult = {
+  webhooks: { processed: number; messages: number };
   recovered: number;
   reaped: number;
   claimed: number;
@@ -38,6 +78,7 @@ export async function drainQueue(
 
   // A crashed worker leaves `running` rows with an expired lease; a stored message
   // may have no job at all. Both are recoverable, and both are cheap to sweep.
+  const webhooks = await processWebhookEvents().catch(() => ({ processed: 0, messages: 0 }));
   const reapedResult = await reapExpiredLeases(new Date()).catch(() => 0);
   const reaped = typeof reapedResult === "number" ? reapedResult : reapedResult.dead + reapedResult.requeued;
   const recovered = await recoverPendingAnalyses({ limit: 50 }).catch(() => 0);
@@ -56,7 +97,7 @@ export async function drainQueue(
     }
   }
 
-  return { recovered, reaped, claimed, outcomes, ms: Date.now() - startedAt };
+  return { webhooks, recovered, reaped, claimed, outcomes, ms: Date.now() - startedAt };
 }
 
 export type QueueStats = {
