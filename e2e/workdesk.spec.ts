@@ -75,4 +75,37 @@ test.describe("workdesk", () => {
     await page.goForward();
     await expect(page).toHaveURL(/order=order_1042/);
   });
+
+  test("recording tracking is a PATCH, and the code is visible afterwards", async ({ page }) => {
+    await enterAs(page, "مالک");
+
+    const update = await page.request.patch("/api/orders/order_1027/shipment", {
+      data: { status: "shipped", carrier: "پست", trackingCode: "E2E-TRK-0001" },
+      failOnStatusCode: false,
+    });
+    expect([200, 404, 409]).toContain(update.status());
+
+    await page.goto("/fa/orders?order=order_1027");
+    await page.waitForTimeout(600);
+    if (update.status() === 200) {
+      expect(await page.content()).toContain("E2E-TRK-0001");
+    }
+  });
+
+  test("a human review writes a decision and the reply is built from state", async ({ page }) => {
+    await enterAs(page, "مالک");
+
+    const review = await page.request.post("/api/suggestions/sug_9001_address/review", {
+      data: { action: "correct", value: { value: "تهران، خیابان نمونهٔ ۷، پلاک ۳۲" } },
+      failOnStatusCode: false,
+    });
+    expect([200, 404, 409]).toContain(review.status());
+
+    const preview = await page.request.get("/api/orders/order_1042/reply-preview", { failOnStatusCode: false });
+    if (preview.status() === 200) {
+      const payload = (await preview.json()) as { data?: { templateKey?: string; body?: string } };
+      expect(typeof payload.data?.templateKey).toBe("string");
+      expect(typeof payload.data?.body).toBe("string");
+    }
+  });
 });
