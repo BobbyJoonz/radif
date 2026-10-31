@@ -75,16 +75,4 @@ test.describe("workdesk", () => {
     await page.goForward();
     await expect(page).toHaveURL(/order=order_1042/);
   });
-
-    expect([200, 400, 404, 409, 422]).toContain(update.status());
-
-    await page.goto("/fa/orders?order=order_1027");
-    await page.waitForTimeout(800);
-    const html = await page.content();
-    if (update.status() === 200) {
-      expect(html).toContain("E2E-TRK-0001");
-    }
-    await page.reload();
-    await expect(page).toHaveURL(/order=order_1027/);
-  });
 });
