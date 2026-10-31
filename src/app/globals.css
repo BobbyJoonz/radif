@@ -1374,3 +1374,27 @@ html[lang="en"] .nums, html[lang="en"] td, html[lang="en"] th, html[lang="en"] .
 .ig-note { font-size: var(--t-meta); color: var(--muted-foreground); line-height: 1.8; margin-top: var(--s2); }
 .ig-ok { font-size: var(--t-meta); color: var(--foreground); margin-bottom: var(--s2); }
 .ig-error { font-size: var(--t-meta); color: var(--critical); margin-top: var(--s2); }
+
+/* ── the connect guide ────────────────────────────────────────────────────── */
+.igpage { max-width: 880px; margin: 0 auto; padding: var(--s6) var(--s5) var(--s8); }
+.ig-eyebrow { font-size: var(--t-micro); color: var(--primary); }
+.ig-title { margin-top: var(--s2); font-size: 28px; font-weight: 800; letter-spacing: -0.015em; }
+.ig-lede { margin-top: var(--s2); font-size: var(--t-small); color: var(--muted-foreground); line-height: 1.85; max-width: 62ch; }
+.ig-blocker { margin-top: var(--s3); padding: 10px 12px; border: 1px solid var(--critical); border-radius: var(--r-2); font-size: var(--t-meta); color: var(--critical); }
+.ig-steps { list-style: none; margin: var(--s5) 0 0; padding: 0; display: grid; gap: 2px; }
+.ig-step { display: grid; grid-template-columns: 32px minmax(0, 1fr) auto; gap: var(--s3); padding: 14px 0; border-top: 1px solid var(--rule-soft); align-items: start; }
+.ig-step-index { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--rule); font-size: var(--t-micro); color: var(--muted-foreground); }
+.ig-step[data-ok="true"] .ig-step-index { border-color: var(--primary); color: var(--primary); }
+.ig-step-body h2 { font-size: var(--t-small); font-weight: 600; }
+.ig-step-body p { margin-top: 2px; font-size: var(--t-meta); color: var(--muted-foreground); line-height: 1.8; }
+.ig-step-hint { font-size: var(--t-micro) !important; opacity: .9; }
+.ig-step-state { font-size: var(--t-micro); color: var(--muted-foreground); white-space: nowrap; }
+.ig-step[data-ok="true"] .ig-step-state { color: var(--primary); }
+.ig-copy { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); margin-top: 6px; }
+.ig-copy code { font-size: var(--t-micro); background: var(--surface); border: 1px solid var(--rule); border-radius: var(--r-1); padding: 3px 8px; }
+.ig-copy-btn { height: var(--h-control-sm); min-height: var(--h-control-sm); padding: 0 10px; font-size: var(--t-micro); }
+.ig-final { margin-top: var(--s6); padding-top: var(--s4); border-top: 1px solid var(--rule); }
+.ig-final h2 { font-size: var(--t-h2); font-weight: 700; }
+.ig-actions { margin-top: var(--s3); display: grid; gap: var(--s2); justify-items: start; }
+.ig-connection { font-size: var(--t-meta); }
+.ig-foot { margin-top: var(--s6); font-size: var(--t-micro); color: var(--muted-foreground); }

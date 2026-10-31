@@ -31,6 +31,7 @@ export function UserMenu({
   labels: {
     account: string;
     settings: string;
+    instagram: string;
     evaluation: string;
     signOut: string;
     signingOut: string;
@@ -130,6 +131,11 @@ export function UserMenu({
               onClick={() => setOpen(false)}
             >
               {labels.settings}
+            </Link>
+          ) : null}
+          {role === "owner" ? (
+            <Link role="menuitem" className="usermenu-item" href={`/${locale}/settings/instagram`} onClick={() => setOpen(false)}>
+              {labels.instagram}
             </Link>
           ) : null}
           {accountMenuKeys(role).includes("evaluation") ? (

@@ -75,6 +75,7 @@ export function AppShell({
             labels={{
               account: dict.shell.account,
               settings: dict.nav.settings,
+              instagram: locale === "fa" ? "اتصال اینستاگرام" : "Connect Instagram",
               evaluation: dict.nav.evaluation,
               signOut: dict.shell.signOut,
               signingOut: locale === "fa" ? "در حال خروج…" : "Signing out…",
