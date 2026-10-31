@@ -566,6 +566,21 @@ model Suggestion {
   @@index([analysisRunId])
 }
 
+/// The shop's own answer book. Plain text on purpose: a reviewable table beats a
+/// vector store for a shop with tens of entries, and the owner can edit the words.
+model KnowledgeEntry {
+  id        String   @id @default(cuid())
+  tenantId  String
+  question  String
+  answer    String
+  tags      String[]
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId, isActive])
+}
+
 enum ReviewState {
   proposed
   accepted
