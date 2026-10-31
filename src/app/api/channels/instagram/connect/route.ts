@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { handler } from "@/server/http";
 import { requireSession } from "@/server/session";
-import { startConnect } from "@/server/services/instagram";
+import { startConnect } from "@/server/instagram";
 
 /**
  * GET /api/channels/instagram/connect — start the OAuth handshake (owner only).

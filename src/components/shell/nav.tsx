@@ -2,10 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect } from "react";
 import { useState } from "react";
 import type { Dictionary } from "@/i18n";
 import type { Locale } from "@/i18n/config";
 import { otherLocale } from "@/i18n/config";
+import { TabIcon } from "./tab-icons";
+import type { NavKey } from "@/lib/nav-matrix";
 
 export type NavItem = { key: string; href: string; label: string; count?: number };
 
@@ -94,57 +97,85 @@ export function MobileNav({ items, locale, dict }: { items: NavItem[]; locale: L
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const primary = items.slice(0, 4);
-  const rest = items.slice(4);
+  // "More" lists what the bar cannot hold; settings is only listed once.
+  const rest = items.slice(4).filter((item) => item.key !== "settings");
+  const settingsItem = items.find((item) => item.key === "settings");
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [open]);
 
   return (
     <>
-      <nav className="mobilenav" aria-label={dict.nav.primary}>
+      <nav className="tabbar" aria-label={dict.nav.primary}>
         {primary.map((item) => (
           <Link
             key={item.key}
             href={`/${locale}${item.href ? `/${item.href}` : ""}`}
             aria-current={isActive(pathname, item.href) ? "page" : undefined}
-            className="mobilenav-link"
+            className="tabbar-item"
           >
-            {item.label}
+            <TabIcon name={item.key as NavKey} className="tabbar-icon" />
+            <span className="tabbar-label">{item.label}</span>
           </Link>
         ))}
         <button
           type="button"
-          className="mobilenav-link"
+          className="tabbar-item"
           aria-expanded={open}
-          onClick={() => setOpen((v) => !v)}
+          aria-controls="tabbar-sheet"
+          onClick={() => setOpen((value) => !value)}
         >
-          {dict.nav.more}
+          <TabIcon name="more" className="tabbar-icon" />
+          <span className="tabbar-label">{dict.nav.more}</span>
         </button>
       </nav>
+
       {open ? (
-        <div className="mobilenav-sheet" role="dialog" aria-label={dict.nav.menu}>
-          <ul>
-            {rest.map((item) => (
-              <li key={item.key}>
-                <Link
-                  href={`/${locale}/${item.href}`}
-                  aria-current={isActive(pathname, item.href) ? "page" : undefined}
-                  onClick={() => setOpen(false)}
-                >
-                  {item.label}
-                </Link>
+        <>
+          <button
+            type="button"
+            className="tabbar-scrim"
+            aria-label={dict.shell.closeMenu}
+            onClick={() => setOpen(false)}
+          />
+          <div className="tabbar-sheet" id="tabbar-sheet" role="dialog" aria-modal="true" aria-label={dict.nav.menu}>
+            <span className="tabbar-grabber" aria-hidden="true" />
+            <ul>
+              {rest.map((item) => (
+                <li key={item.key}>
+                  <Link
+                    href={`/${locale}/${item.href}`}
+                    aria-current={isActive(pathname, item.href) ? "page" : undefined}
+                    onClick={() => setOpen(false)}
+                  >
+                    <TabIcon name={item.key as NavKey} className="tabbar-sheet-icon" />
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+              {settingsItem && !rest.some((item) => item.key === "settings") ? (
+                <li>
+                  <Link href={`/${locale}/settings`} onClick={() => setOpen(false)}>
+                    <TabIcon name="settings" className="tabbar-sheet-icon" />
+                    {settingsItem.label}
+                  </Link>
+                </li>
+              ) : null}
+              <li>
+                <LocaleLink locale={locale} dict={dict} />
               </li>
-            ))}
-            <li>
-              <Link href={`/${locale}/settings`} onClick={() => setOpen(false)}>
-                {dict.nav.settings}
-              </Link>
-            </li>
-            <li>
-              <LocaleLink locale={locale} dict={dict} />
-            </li>
-          </ul>
-          <button type="button" className="mobilenav-close" onClick={() => setOpen(false)}>
-            {dict.shell.closeMenu}
-          </button>
-        </div>
+            </ul>
+            <button type="button" className="tabbar-close" onClick={() => setOpen(false)}>
+              {dict.shell.closeMenu}
+            </button>
+          </div>
+        </>
       ) : null}
     </>
   );

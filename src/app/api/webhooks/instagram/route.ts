@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { handler, ok } from "@/server/http";
 import { instagramConfig, parseWebhook, verifyChallenge, verifySignature } from "@/server/channels/instagram/api";
-import { ingestInbound } from "@/server/services/instagram";
+import { ingestInbound } from "@/server/instagram";
 
 /**
  * Instagram webhooks.

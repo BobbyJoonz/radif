@@ -9,7 +9,7 @@ import {
   verifyState,
   REQUIRED_SCOPES,
 } from "@/server/channels/instagram/api";
-import { ingestInbound } from "@/server/services/instagram";
+import { ingestInbound } from "@/server/instagram";
 import { resetDatabase } from "./helpers/db";
 import { createTenant, type TestTenant } from "./helpers/fixtures";
 
@@ -135,6 +135,19 @@ describe("ingestion (read-only)", () => {
     const messages = await prisma.message.findMany({ where: { tenantId: toranj.tenantId, source: "instagram" } });
     expect(messages).toHaveLength(1);
     expect(messages[0].externalRef).toBe("mid_1");
+
+    // the same path as replay: a stored message becomes an analysis job, so the
+    // worker never needs to know whether a message was replayed or delivered live
+    const job = await prisma.job.findFirst({
+      where: { tenantId: toranj.tenantId, type: "analyze_message" },
+      select: { id: true, payload: true },
+    });
+    expect(job).not.toBeNull();
+    const run = await prisma.analysisRun.findFirst({
+      where: { tenantId: toranj.tenantId, messageId: (job?.payload as { messageId?: string } | null)?.messageId ?? "" },
+      select: { id: true },
+    });
+    expect(run).not.toBeNull();
 
     const conversation = await prisma.conversation.findFirst({
       where: { tenantId: toranj.tenantId },

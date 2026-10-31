@@ -277,46 +277,100 @@ a { color: inherit; text-decoration: none; }
 .lang-switch:hover { color: var(--foreground); background: var(--surface); }
 
 .shellmain { flex: 1; min-width: 0; }
-.mobilenav { display: none; }
+.tabbar, .tabbar-sheet, .tabbar-scrim { display: none; }
 
+/* ── the bottom bar: phones and tablets in portrait ───────────────────────────
+   Five destinations, icon over label, one lamp-coloured current state. It sits on
+   a translucent pane so the ledger scrolls under it instead of ending at a hard
+   edge, and it respects the home indicator with safe-area padding. Nothing else
+   in the page moves: the only layout change is the space reserved at the bottom. */
 @media (max-width: 900px) {
   .topnav { display: none; }
   .shellhead-top { height: 52px; padding: 0 var(--s4); gap: var(--s2); }
   .shopname { display: none; }
   .account { margin-inline-start: auto; }
   .account-role { display: none; }
-  .shellmain { padding-bottom: 64px; }
-  .mobilenav {
-    position: fixed; inset-inline: 0; bottom: 0; z-index: 30;
+  .shellmain { padding-bottom: calc(66px + env(safe-area-inset-bottom)); }
+
+  .tabbar {
+    position: fixed; inset-inline: 0; bottom: 0; z-index: 40;
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    background: var(--background);
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    /* the bar's content stays a bar, even on an 820px tablet: five items centred in
+       560px instead of five islands spread across the whole width */
+    padding: 6px max(4px, calc((100% - 560px) / 2)) calc(6px + env(safe-area-inset-bottom));
+    background: color-mix(in srgb, var(--background) 84%, transparent);
+    -webkit-backdrop-filter: blur(18px) saturate(150%);
+    backdrop-filter: blur(18px) saturate(150%);
     border-top: 1px solid var(--rule);
-    padding-bottom: env(safe-area-inset-bottom);
+    box-shadow: 0 -10px 30px rgb(0 0 20 / 45%);
   }
-  .mobilenav-link {
-    display: grid; place-items: center;
-    min-height: 56px;
-    font-size: var(--t-meta);
-    color: var(--muted-foreground);
-    background: none; border: 0; cursor: pointer;
+  .tabbar-item {
+    position: relative;
+    display: grid; justify-items: center; gap: 3px;
+    min-height: 54px; padding: 4px 2px;
+    border: 0; background: none; color: var(--muted-foreground);
+    font: inherit; font-size: 10.5px; letter-spacing: 0.01em;
+    text-decoration: none; cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: color 160ms ease, transform 160ms ease;
   }
-  .mobilenav-link[aria-current="page"] { color: var(--foreground); box-shadow: inset 0 2px 0 var(--primary); }
-  .mobilenav-sheet {
-    position: fixed; inset-inline: 0; bottom: 56px; z-index: 31;
+  .tabbar-item:active { transform: scale(0.96); }
+  .tabbar-icon { width: 20px; height: 20px; opacity: 0.85; }
+  .tabbar-label { line-height: 1.2; white-space: nowrap; }
+  .tabbar-item[aria-current="page"] { color: var(--primary); }
+  .tabbar-item[aria-current="page"] .tabbar-icon { opacity: 1; }
+  .tabbar-item[aria-current="page"] .tabbar-label { color: var(--foreground); font-weight: 600; }
+  .tabbar-item[aria-current="page"]::before {
+    content: "";
+    position: absolute; top: -6px; inset-inline: 26%; height: 2px;
+    border-radius: 2px; background: var(--primary);
+  }
+
+  .tabbar-scrim {
+    position: fixed; inset: 0; z-index: 44;
+    display: block; padding: 0; border: 0;
+    background: rgb(0 0 20 / 58%);
+    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(3px);
+  }
+
+  .tabbar-sheet {
+    position: fixed; inset-inline: 0; bottom: 0; z-index: 45;
+    display: block;
+    padding: 10px var(--s4) calc(var(--s4) + env(safe-area-inset-bottom));
     background: var(--surface-raised);
-    border-top: 1px solid var(--border);
-    padding: var(--s4);
-    box-shadow: var(--shadow-sheet);
+    border-top: 1px solid var(--rule);
+    border-start-start-radius: var(--r-3);
+    border-start-end-radius: var(--r-3);
+    box-shadow: 0 -18px 44px rgb(0 0 20 / 60%);
+    animation: tabbar-up 220ms cubic-bezier(0.22, 1, 0.36, 1);
   }
-  .mobilenav-sheet ul { list-style: none; margin: 0 0 var(--s3); padding: 0; display: grid; gap: 2px; }
-  .mobilenav-sheet a { display: block; padding: 12px; font-size: var(--t-body); }
-  .mobilenav-sheet a[aria-current="page"] { color: var(--primary); }
-  .mobilenav-close {
+  .tabbar-grabber {
+    display: block; width: 36px; height: 4px; margin: 0 auto 10px;
+    border-radius: 2px; background: var(--rule);
+  }
+  .tabbar-sheet ul { list-style: none; margin: 0 0 var(--s3); padding: 0; display: grid; gap: 2px; }
+  .tabbar-sheet a {
+    display: flex; align-items: center; gap: var(--s3);
+    min-height: 46px; padding: 10px 12px;
+    border-radius: var(--r-1);
+    font-size: var(--t-body); color: var(--foreground);
+    text-decoration: none;
+  }
+  .tabbar-sheet a:hover { background: var(--surface); }
+  .tabbar-sheet a[aria-current="page"] { color: var(--primary); }
+  .tabbar-sheet-icon { width: 18px; height: 18px; opacity: 0.8; }
+  .tabbar-close {
     width: 100%; min-height: 44px;
-    background: transparent; border: 1px solid var(--border);
-    border-radius: var(--r-1); color: var(--muted-foreground); font-size: var(--t-small);
+    background: transparent; border: 1px solid var(--border); border-radius: var(--r-1);
+    color: var(--muted-foreground); font-size: var(--t-small); cursor: pointer;
   }
+}
+
+@keyframes tabbar-up {
+  from { transform: translateY(12px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
 }
 
 /* ───────────────────────────── today (ledger) ───────────────────────────── */
@@ -1318,3 +1372,20 @@ html[lang="en"] .nums, html[lang="en"] td, html[lang="en"] th, html[lang="en"] .
 @media (max-width: 720px) {
   .team-invite { grid-template-columns: 1fr; }
 }
+
+/* ── the Instagram channel card ───────────────────────────────────────────── */
+.ig { margin-top: var(--s6); padding-top: var(--s4); border-top: 1px solid var(--rule); }
+.ig-h2 { font-size: var(--t-h2); font-weight: 700; margin-bottom: var(--s2); }
+.ig-list { list-style: none; margin: 0 0 var(--s3); padding: 0; display: grid; }
+.ig-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: var(--s3); align-items: center; padding: 10px 0; border-bottom: 1px solid var(--rule-soft); }
+.ig-who { display: grid; gap: 1px; min-width: 0; }
+.ig-who b { font-size: var(--t-small); font-weight: 600; }
+.ig-who small { font-size: var(--t-micro); color: var(--muted-foreground); }
+.ig-state { font-size: var(--t-micro); color: var(--muted-foreground); }
+.ig-state-connected { color: var(--primary); }
+.ig-state-expired, .ig-state-revoked { color: var(--critical); }
+.ig-remove { height: var(--h-control-sm); min-height: var(--h-control-sm); padding: 0 10px; font-size: var(--t-micro); }
+.ig-connect { display: inline-flex; margin-top: var(--s2); }
+.ig-note { font-size: var(--t-meta); color: var(--muted-foreground); line-height: 1.8; margin-top: var(--s2); }
+.ig-ok { font-size: var(--t-meta); color: var(--foreground); margin-bottom: var(--s2); }
+.ig-error { font-size: var(--t-meta); color: var(--critical); margin-top: var(--s2); }

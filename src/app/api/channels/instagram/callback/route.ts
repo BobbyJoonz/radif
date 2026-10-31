@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { handler } from "@/server/http";
 import { requireSession } from "@/server/session";
-import { completeConnect } from "@/server/services/instagram";
+import { completeConnect } from "@/server/instagram";
 
 /**
  * GET /api/channels/instagram/callback — finish the handshake.

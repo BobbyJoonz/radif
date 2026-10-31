@@ -1,6 +1,7 @@
 "use client";
 
 import { TeamPanel } from "@/components/settings/team-panel";
+import { InstagramCard } from "@/components/settings/instagram-card";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -436,6 +437,8 @@ export function SettingsScreen({
           ) : null}
         </div>
       )}
+      <InstagramCard locale={locale} outcome={typeof window === "undefined" ? null : new URLSearchParams(window.location.search).get("instagram")} />
+
       <TeamPanel locale={locale} />
 
       <Toast message={toast?.message ?? null} tone={toast?.tone} onClose={clear} />
