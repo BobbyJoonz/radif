@@ -1,4 +1,5 @@
 import { prisma } from "@/server/db";
+import { queueStats } from "@/server/worker/drain";
 import { authSecretSource, isDemo, missingRequiredEnv } from "@/lib/env";
 import { handler, ok } from "@/server/http";
 import { getSessionContext } from "@/server/session";
