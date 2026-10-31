@@ -285,7 +285,7 @@ a { color: inherit; text-decoration: none; }
   .shopname { display: none; }
   .account { margin-inline-start: auto; }
   .account-role { display: none; }
-  .shellmain { padding-bottom: calc(56px + env(safe-area-inset-bottom)); }
+  .shellmain { padding-bottom: calc(55px + env(safe-area-inset-bottom)); }
 
   .tabbar {
     position: fixed; inset-inline: 0; bottom: 0; z-index: 40;
@@ -298,25 +298,26 @@ a { color: inherit; text-decoration: none; }
 
   .tabbar-item {
     position: relative;
-    display: grid; justify-items: center; align-content: center; gap: 2px;
-    min-height: 56px; padding: 8px 2px;
+    display: grid; justify-items: center; align-content: center; gap: 3px;
+    min-height: 54px; padding: 7px 2px;
     border: 0; background: none;
     color: var(--muted-foreground);
-    font: inherit; font-size: 9.5px; letter-spacing: 0.02em;
+    font: inherit; font-size: 9.5px; letter-spacing: 0.01em;
     text-decoration: none; cursor: pointer;
     -webkit-tap-highlight-color: transparent;
     transition: color 140ms ease;
   }
-  .tabbar-icon { width: 19px; height: 19px; }
+  .tabbar-icon { width: 18px; height: 18px; }
   .tabbar-label { line-height: 1; white-space: nowrap; }
-  /* the only differentiator: the lamp colour on the destination you are on */
-  .tabbar-item[aria-current="page"],
+  /* One orange element per bar — the glyph. The word is marked by weight instead, so
+     the bar never has two signals competing for the same glance, and the cue is not
+     colour alone (WCAG 1.4.1). */
+  .tabbar-item[aria-current="page"] .tabbar-icon { color: var(--primary); }
   .tabbar-item[aria-current="page"] .tabbar-label {
-    color: var(--primary);
+    color: var(--foreground);
+    font-weight: 600;
   }
-  /* colour alone is not a cue everyone can see: the current label is also a touch
-     heavier, which is a second, typographic cue rather than a second decoration. */
-  .tabbar-item[aria-current="page"] .tabbar-label { font-weight: 600; }
+  .tabbar-item:active .tabbar-icon { opacity: 0.7; }
 
   .tabbar-scrim {
     position: fixed; inset: 0; z-index: 44;
@@ -338,12 +339,12 @@ a { color: inherit; text-decoration: none; }
   .tabbar-sheet li + li { border-top: 1px solid var(--rule-soft); }
   .tabbar-sheet a {
     display: flex; align-items: center; gap: var(--s3);
-    min-height: 46px; padding: 0 var(--s5);
+    min-height: 44px; padding: 0 var(--s5);
     font-size: var(--t-small); color: var(--foreground);
     text-decoration: none;
   }
   .tabbar-sheet a[aria-current="page"] { color: var(--primary); }
-  .tabbar-sheet-icon { width: 16px; height: 16px; opacity: 0.7; }
+  .tabbar-sheet-icon { width: 16px; height: 16px; opacity: 0.65; }
   .tabbar-close {
     width: 100%; min-height: 44px; margin-top: 2px;
     background: none; border: 0; border-top: 1px solid var(--rule-soft);
